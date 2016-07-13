@@ -1,3 +1,18 @@
+#
+# Executes commands at the start of an interactive session.
+#
+# Authors:
+#   Sorin Ionescu <sorin.ionescu@gmail.com>
+#
+
+# Source Prezto.
+if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
+  source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
+fi
+
+# Customize to your needs...
+
+
 # User configuration
 
 # aliases
@@ -21,6 +36,12 @@ autoload -U compinit && compinit
 
 # 補完候補を初回のTABで一覧表示(default ON)
 setopt auto_list
+
+# 同時に起動したzshの間でヒストリを共有する
+setopt share_history
+
+# 同じコマンドをヒストリに残さない
+setopt hist_ignore_all_dups
 
 # 大文字小文字を区別しない（大文字を入力した場合は区別する）
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
