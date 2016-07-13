@@ -10,14 +10,14 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 
-# Customize to your needs...
 
+# -------------------------------------------------------
 
-# User configuration
+# My configuration
 
 # aliases
-alias ll='ls -l -G'
-alias la='ls -al -G'
+# alias ll='ls -l -G'
+# alias la='ls -al -G'
 
 # ディレクトリ名でcd
 setopt auto_cd
