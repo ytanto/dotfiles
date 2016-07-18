@@ -20,7 +20,7 @@ fi
 # alias la='ls -al -G'
 
 # ディレクトリ名でcd
-setopt auto_cd
+# setopt auto_cd
 
 # ビープ音を鳴らさない
 setopt no_beep
