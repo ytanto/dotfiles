@@ -14,14 +14,16 @@ fi
 
 # My configuration
 
+# settings for zsh
 export ZDOTDIR=$HOME/dotfiles/
 
 # settings for Go
 export GOPATH=$HOME/Documents/Code/Go
 export PATH=$GOPATH/bin:$PATH
-
-export PATH=$HOME/bin:/usr/local/bin:$PATH
+# export PATH=$HOME/bin:/usr/local/bin:$PATH:$GOPATH/bin
 
 # nodebrew
 export PATH=$HOME/.nodebrew/current/bin:$PATH
 
+# ????
+export PATH=$HOME/bin:/usr/local/bin:$PATH
