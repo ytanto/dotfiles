@@ -22,3 +22,12 @@ set noswapfile
 " 入力中のコマンドをステータスに表示
 set showcmd
 
+" タブを半角スペースへ
+set expandtab
+
+" タブ
+set tabstop=2
+set shiftwidth=2
+
+" オートインデント
+set smartindent
