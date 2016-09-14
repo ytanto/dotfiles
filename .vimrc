@@ -1,3 +1,5 @@
+" setting
+
 " 矢印キーを無効
 noremap <Up> <Nop>
 noremap <Down> <Nop>
@@ -10,3 +12,13 @@ inoremap <Right> <Nop>
 
 " シンタックスを有効
 syntax on
+
+" 文字コードをUTF-8
+set fenc=utf-8
+
+" スワップファイルを生成しない
+set noswapfile
+
+" 入力中のコマンドをステータスに表示
+set showcmd
+
