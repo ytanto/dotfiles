@@ -40,3 +40,6 @@ set showmatch
 
 " undoファイルの生成を無効
 set noundofile
+
+" viminfoの生成を無効
+set viminfo=
