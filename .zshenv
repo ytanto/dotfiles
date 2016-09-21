@@ -23,8 +23,11 @@ export GOPATH=$HOME/Documents/src/Go
 export PATH=$GOPATH/bin:$PATH
 # export PATH=$HOME/bin:/usr/local/bin:$PATH:$GOPATH/bin
 
-# nodebrew
+# settings for nodebrew
 export PATH=$HOME/.nodebrew/current/bin:$PATH
+
+# settings for less
+export LESSHISTFILE=- 
 
 # ????
 export PATH=$HOME/bin:/usr/local/bin:$PATH
