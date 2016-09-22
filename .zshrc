@@ -43,6 +43,9 @@ setopt share_history
 # 同じコマンドをヒストリに残さない
 setopt hist_ignore_all_dups
 
+# historyコマンドは履歴に登録しない
+setopt hist_save_no_dups
+
 # 大文字小文字を区別しない（大文字を入力した場合は区別する）
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
