@@ -41,6 +41,9 @@
 ;; 自動保存を無効
 (setq auto-save-default nil)
 
+;; バックアップを無効
+(setq make-backup-files nil)
+
 ;; タイトルバーにファイルのフルパス表示
 (setq frame-title-format "%f")
 
