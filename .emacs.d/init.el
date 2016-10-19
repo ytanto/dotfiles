@@ -21,7 +21,7 @@
 (auto-image-file-mode t)
 
 ;;; メニューバーを消す
-(menu-bar-mode -1)1
+(menu-bar-mode -1)
 
 ;;; ツールバーを消す
 (tool-bar-mode -1)
