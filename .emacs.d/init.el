@@ -71,3 +71,16 @@
 
 ;; 文字コード: UTF-8
 (prefer-coding-system 'utf-8)
+
+;; ファイル名の設定(Mac OS X)
+(when (eq system-type 'darwin)
+  (require 'ucs-normalize)
+  (set-file-name-coding-system 'utf-8-hfs)
+  (setq locale-coding-system 'utf-8-hfs)
+)
+
+;; ファイル名の設定(Windows)
+(when (eq system-type 'w32)
+  (set-file-name-coding-system 'cp932)
+  (setq locale-coding-system 'cp932)
+)
