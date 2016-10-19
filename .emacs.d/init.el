@@ -68,3 +68,6 @@
 
 ;; C-t(transpose-chars)をウィンドウ切り替えに設定
 (define-key global-map (kbd "C-t") 'other-window)
+
+;; 文字コード: UTF-8
+(prefer-coding-system 'utf-8)
