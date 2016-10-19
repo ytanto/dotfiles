@@ -56,7 +56,15 @@
 ;; フォント設定
 (set-face-attribute 'default nil
                     :family "Ricty Diminished Discord"
-                    :height 180)
+                    :height 140)
 
 (setq visible-bell t)
 (setq ring-bell-function 'ignore)
+
+;;; キーマップ
+
+;; C-h(ヘルプコマンド)をバックスペースに設定
+(keyboard-translate ?\C-h ?\C-?)
+
+;; C-t(transpose-chars)をウィンドウ切り替えに設定
+(define-key global-map (kbd "C-t") 'other-window)
