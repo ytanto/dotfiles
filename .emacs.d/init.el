@@ -87,3 +87,7 @@
 
 ;; ファイルサイズを表示
 (size-indication-mode t)
+
+;; paren-mode : 対応括弧のハイライト
+(setq show-paren-delay 0) ; 表示までの秒数. デフォルトは0.125
+(show-paren-mode t)
