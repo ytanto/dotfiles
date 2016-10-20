@@ -94,3 +94,15 @@
 ;; オートセーブファイルのディレクトリ指定
 (setq auto-save-file-name-transforms
       `((".*" ,(expand-file-name "~/.emacs.d/backups/")) t))
+
+
+;; emacs-lisp-mode
+;; カーソル位置にある関数や変数をエコーエリアに表示
+(defun elisp-mdoe-hooks ()
+  "lisp-mode-hooks"
+  (when (require 'eldoc nil t)
+    (setq eldoc-idle-delay 0.2)
+    (setq eldoc-eho-area-use-multiline-p t)
+    (turn-on-eldoc-mode)))
+
+(add-hook 'emacs-lisp-mode-hook 'elisp-mode-hooks)
