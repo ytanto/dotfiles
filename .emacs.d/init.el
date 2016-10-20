@@ -56,7 +56,7 @@
 ;; フォント設定
 (set-face-attribute 'default nil
                     :family "Ricty Diminished Discord"
-                    :height 140)
+                    :height 160)
 
 (setq visible-bell t)
 (setq ring-bell-function 'ignore)
@@ -84,3 +84,6 @@
   (set-file-name-coding-system 'cp932)
   (setq locale-coding-system 'cp932)
 )
+
+;; ファイルサイズを表示
+(size-indication-mode t)
