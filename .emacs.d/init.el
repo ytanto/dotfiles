@@ -38,12 +38,6 @@
 ;; scratchの初期メッセージ消去
 (setq initial-scratch-message "")
 
-;; 自動保存を無効
-(setq auto-save-default nil)
-
-;; バックアップを無効
-(setq make-backup-files nil)
-
 ;; タイトルバーにファイルのフルパス表示
 (setq frame-title-format "%f")
 
@@ -91,3 +85,12 @@
 ;; paren-mode : 対応括弧のハイライト
 (setq show-paren-delay 0) ; 表示までの秒数. デフォルトは0.125
 (show-paren-mode t)
+
+;; バックアップファイルのディレクトリ指定
+(add-to-list 'backup-directory-alist
+             (cons "." "~/.emacs.d/backups/"))
+
+
+;; オートセーブファイルのディレクトリ指定
+(setq auto-save-file-name-transforms
+      `((".*" ,(expand-file-name "~/.emacs.d/backups/")) t))
