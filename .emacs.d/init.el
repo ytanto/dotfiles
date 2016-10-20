@@ -98,7 +98,7 @@
 
 ;; emacs-lisp-mode
 ;; カーソル位置にある関数や変数をエコーエリアに表示
-(defun elisp-mdoe-hooks ()
+(defun elisp-mode-hooks ()
   "lisp-mode-hooks"
   (when (require 'eldoc nil t)
     (setq eldoc-idle-delay 0.2)
