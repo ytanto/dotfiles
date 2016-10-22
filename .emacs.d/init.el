@@ -1,6 +1,3 @@
-;;ロードパスの追加
-;; load-path
-
 ;; Added by Package.el.  This must come before configurations of
 ;; installed packages.  Don't delete this line.  If you don't want it,
 ;; just comment it out by adding a semicolon to the start of the line.
@@ -9,9 +6,13 @@
 
 ;; ロードパス追加用関数
 (defun add-to-load-path (&rest paths)
-  (mapc '(lambda (path)
-           (add-to-list 'load-path path))
-        (mapcar 'expand-file-name paths)))
+  (let (path)
+    (dolist (path paths paths)
+     (let ((default-directory (expand-file-name (concat user-emacs-directory path))))
+        (add-to-list 'load-path default-directory)
+         (if (fboundp 'normal-top-level-add-subdirs-to-load-path)
+             (normal-top-level-add-subdirs-to-load-path))))))
+
 
 ;; lisp directory's path
 ;; Localeに合わせた環境の設定
