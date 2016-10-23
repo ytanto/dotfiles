@@ -48,11 +48,7 @@
 ;; タブ幅
 (custom-set-variables '(tab-width 4))
 
-;; フォント設定
-(set-face-attribute 'default nil
-                    :family "Ricty Diminished Discord"
-                    :height 160)
-
+;; ビープ音を消す
 (setq visible-bell t)
 (setq ring-bell-function 'ignore)
 
