@@ -7,3 +7,4 @@
 .emacs.d/elpa
 .emacs.d/lisp
 .emacs.d/el-get
+.emacs.d/backups
