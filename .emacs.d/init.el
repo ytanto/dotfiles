@@ -154,3 +154,6 @@
     (descbinds-anything-install)))
 
 
+;; color-moccur
+(el-get-bundle color-moccur)
+(when (require 'color-moccur nil t))
