@@ -56,14 +56,6 @@
 (setq visible-bell t)
 (setq ring-bell-function 'ignore)
 
-;; キーマップ
-
-;; C-h(ヘルプコマンド)をバックスペースに設定
-(keyboard-translate ?\C-h ?\C-?)
-
-;; C-t(transpose-chars)をウィンドウ切り替えに設定
-(define-key global-map (kbd "C-t") 'other-window)
-
 ;; 文字コード: UTF-8
 (prefer-coding-system 'utf-8)
 
@@ -122,6 +114,10 @@
       (eval-print-last-sexp))))
 
 (el-get 'sync)
+
+(el-get-bundle init-loader)
+(when (require 'init-loader nil t)
+  (init-loader-load "~/.emacs.d/inits"))
 
 ;; auto-complete
 (el-get-bundle auto-complete)
