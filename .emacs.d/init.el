@@ -42,31 +42,6 @@
 ;; タイトルバーにファイルのフルパス表示
 (setq frame-title-format "%f")
 
-;; タブをスペースで扱う
-(setq-default indent-tabs-mode nil)
-
-;; タブ幅
-(custom-set-variables '(tab-width 4))
-
-;; ビープ音を消す
-(setq visible-bell t)
-(setq ring-bell-function 'ignore)
-
-;; 文字コード: UTF-8
-(prefer-coding-system 'utf-8)
-
-;; ファイル名の設定(Mac OS X)
-(when (eq system-type 'darwin)
-  (require 'ucs-normalize)
-  (set-file-name-coding-system 'utf-8-hfs)
-  (setq locale-coding-system 'utf-8-hfs)
-)
-
-;; ファイル名の設定(Windows)
-(when (eq system-type 'w32)
-  (set-file-name-coding-system 'cp932)
-  (setq locale-coding-system 'cp932)
-)
 
 ;; ファイルサイズを表示
 (size-indication-mode t)
@@ -74,16 +49,6 @@
 ;; paren-mode : 対応括弧のハイライト
 (setq show-paren-delay 0) ; 表示までの秒数. デフォルトは0.125
 (show-paren-mode t)
-
-;; バックアップファイルのディレクトリ指定
-(add-to-list 'backup-directory-alist
-             (cons "." "~/.emacs.d/backups/"))
-
-
-;; オートセーブファイルのディレクトリ指定
-(setq auto-save-file-name-transforms
-      `((".*" ,(expand-file-name "~/.emacs.d/backups/")) t))
-
 
 ;; emacs-lisp-mode
 ;; カーソル位置にある関数や変数をエコーエリアに表示
@@ -111,10 +76,9 @@
 
 (el-get 'sync)
 
-(el-get-bundle init-loader)
-(when (require 'init-loader nil t)
-  (init-loader-load "~/.emacs.d/inits"))
-
 (el-get-bundle auto-complete)
 (el-get-bundle anything)
 (el-get-bundle color-moccur)
+(el-get-bundle init-loader)
+(when (require 'init-loader nil t)
+  (init-loader-load "~/.emacs.d/inits"))
