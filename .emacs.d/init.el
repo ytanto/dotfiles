@@ -42,7 +42,6 @@
 ;; タイトルバーにファイルのフルパス表示
 (setq frame-title-format "%f")
 
-
 ;; ファイルサイズを表示
 (size-indication-mode t)
 
@@ -79,6 +78,10 @@
 (el-get-bundle auto-complete)
 (el-get-bundle anything)
 (el-get-bundle color-moccur)
+(el-get-bundle go-mode)
+(el-get-bundle go-autocomplete)
+(el-get-bundle go-eldoc)
 (el-get-bundle init-loader)
+
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))
