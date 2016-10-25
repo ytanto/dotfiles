@@ -78,6 +78,7 @@
 (el-get-bundle auto-complete)
 (el-get-bundle helm)
 (el-get-bundle color-moccur)
+(el-get-bundle moccur-edit)
 (el-get-bundle go-mode)
 (el-get-bundle go-autocomplete)
 (el-get-bundle go-eldoc)
