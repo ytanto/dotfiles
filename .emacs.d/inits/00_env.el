@@ -31,3 +31,5 @@
 (setq auto-save-file-name-transforms
       `((".*" ,(expand-file-name "~/.emacs.d/backups/")) t))
 
+;; 括弧の自動補完を有効
+(electric-pair-mode 1)
