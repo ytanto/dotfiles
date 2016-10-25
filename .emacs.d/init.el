@@ -76,7 +76,7 @@
 (el-get 'sync)
 
 (el-get-bundle auto-complete)
-(el-get-bundle anything)
+(el-get-bundle helm)
 (el-get-bundle color-moccur)
 (el-get-bundle go-mode)
 (el-get-bundle go-autocomplete)
