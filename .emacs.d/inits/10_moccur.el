@@ -1,4 +1,5 @@
 (when (require 'color-moccur nil t)
+  (require 'moccur-edit nil t)
   ;; M-oにoccur-by-moccurを割り当て
   (define-key global-map (kbd "M-o") 'occur-by-moccur)
   ;; スペース区切りでAND検索
