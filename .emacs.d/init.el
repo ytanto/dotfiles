@@ -75,6 +75,7 @@
 
 (el-get 'sync)
 
+(el-get-bundle exec-path-from-shell)
 (el-get-bundle auto-complete)
 (el-get-bundle helm)
 (el-get-bundle color-moccur)
@@ -83,6 +84,5 @@
 (el-get-bundle go-autocomplete)
 (el-get-bundle go-eldoc)
 (el-get-bundle init-loader)
-
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))

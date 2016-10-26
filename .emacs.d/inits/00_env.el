@@ -1,3 +1,7 @@
+(when (require 'exec-path-from-shell)
+  (let ((envs '("PATH")))
+    (exec-path-from-shell-copy-envs envs)))
+
 ;; タブをスペースで扱う
 (setq-default indent-tabs-mode nil)
 
