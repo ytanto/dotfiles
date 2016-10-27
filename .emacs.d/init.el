@@ -78,6 +78,8 @@
 (el-get-bundle exec-path-from-shell)
 (el-get-bundle auto-complete)
 (el-get-bundle helm)
+(el-get-bundle undohist)
+(el-get-bundle undo-tree)
 (el-get-bundle color-moccur)
 (el-get-bundle moccur-edit)
 (el-get-bundle go-mode)
