@@ -14,11 +14,12 @@
  ;;  '(region ((t (:background "#403D3D"))))
 
  ;; モードライン
- '(mode-line ((t (:background "#8b2252" :foreground "#FFFFf9"
-                              :box (:line-width 1 :color "#8b2252")))))
+ '(mode-line ((t (:background "#4a0222" :foreground "#FFFFf9"
+                              :box (:line-width 1 :color "#4a0222")))))
  '(mode-line-buffer-id ((t (:weight bold))))
  '(mode-line-emphasis ((t (:weight bold))))
  '(mode-line-highlight ((t nil)))
  '(mode-line-inactive ((t (:background "#200019" :foreground "#999999"
                                        :box (:line-width 1 :color "#200019")))))
+
  )
