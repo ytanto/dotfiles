@@ -30,9 +30,6 @@
 ;; カーソルの点滅を止める
 (blink-cursor-mode 0)
 
-;; テーマの設定
-(load-theme 'misterioso t)
-
 ;; Welcomeページを非表示
 (setq inhibit-startup-message t)
 
