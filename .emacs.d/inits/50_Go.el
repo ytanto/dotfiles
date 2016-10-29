@@ -10,4 +10,5 @@
             (setq tab-width 2)
             (go-eldoc-setup)
             (add-hook 'before-save-hook 'gofmt-before-save)
+            (local-set-key (kbd "M-.") 'godef-jump)
             ))
