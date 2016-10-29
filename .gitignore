@@ -8,3 +8,4 @@
 .emacs.d/lisp
 .emacs.d/el-get
 .emacs.d/backups
+.emacs.d/undohist
