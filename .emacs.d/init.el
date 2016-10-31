@@ -1,3 +1,4 @@
+
 ;; Added by Package.el.  This must come before configurations of
 ;; installed packages.  Don't delete this line.  If you don't want it,
 ;; just comment it out by adding a semicolon to the start of the line.
@@ -36,6 +37,7 @@
 (el-get-bundle exec-path-from-shell)
 (el-get-bundle auto-complete)
 (el-get-bundle helm)
+(el-get-bundle recentf-ext)
 (el-get-bundle undohist)
 (el-get-bundle undo-tree)
 (el-get-bundle color-moccur)
