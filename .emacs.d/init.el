@@ -40,6 +40,7 @@
 (el-get-bundle undo-tree)
 (el-get-bundle color-moccur)
 (el-get-bundle moccur-edit)
+(el-get-bundle multiple-cursors)
 (el-get-bundle flycheck)
 (el-get-bundle go-mode)
 (el-get-bundle go-autocomplete)
