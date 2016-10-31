@@ -3,9 +3,14 @@
 .zhistory
 .zcompdump
 .DS_Store
-.emacs.d/auto-save-list
+.emacs.d/auto-save-list/*
+!.emacs.d/auto-save-list/.gitkeep
 .emacs.d/elpa
 .emacs.d/lisp
 .emacs.d/el-get
-.emacs.d/backups
-.emacs.d/undohist
+.emacs.d/backups/*
+!.emacs.d/backups/.gitkeep
+.emacs.d/undohist/*
+!.emacs.d/undohist/.gitkeep
+.emacs.d/cache/*
+!.emacs.d/cache/.gitkeep
