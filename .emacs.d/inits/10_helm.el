@@ -10,4 +10,3 @@
 
   ;; C-h バックスペース
   (define-key helm-find-files-map (kbd "C-h") 'delete-backward-char))
-
