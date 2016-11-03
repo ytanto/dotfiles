@@ -22,6 +22,12 @@
 ;; ファイルサイズを表示
 (size-indication-mode t)
 
+;; 文字を折り返さない(通常のウィンドウ用)
+(setq-default truncate-lines t)
+
+;; 文字を折り返さない(ウィンドウを左右に分割したとき用)
+(setq-default truncate-partial-width-windows t)
+
 ;; paren-mode : 対応括弧のハイライト
 (setq show-paren-delay 0) ; 表示までの秒数. デフォルトは0.125
 (show-paren-mode t)
