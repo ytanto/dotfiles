@@ -49,6 +49,7 @@
 (el-get-bundle js2-mode)
 (el-get-bundle coffee-mode)
 (el-get-bundle yaml-mode)
+(el-get-bundle web-mode)
 (el-get-bundle init-loader)
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))
