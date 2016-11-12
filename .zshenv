@@ -20,7 +20,9 @@ export HISTFILESIZE=10000
 
 # settings for Go
 export GOPATH=$HOME/Documents/src/Go
+export GOROOT="/usr/local/Cellar/go/1.7.1/libexec"
 export PATH=$GOPATH/bin:$PATH
+
 # export PATH=$HOME/bin:/usr/local/bin:$PATH:$GOPATH/bin
 
 # settings for nodebrew
