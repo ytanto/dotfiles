@@ -1,5 +1,5 @@
 ;; TODO: my-theme作成
-(load-theme 'misterioso t)
+(load-theme 'tango-dark t)
 
 (deftheme my-theme
   "tannaka theme")
