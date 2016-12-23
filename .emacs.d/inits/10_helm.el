@@ -1,4 +1,4 @@
-(when (require 'helm-config)
+(when (require 'helm-config)
   ;; helm-for-files
   ;; (define-key global-map (kbd "C-x b") 'helm-for-files)
   
@@ -19,4 +19,4 @@
                                    helm-source-files-in-current-dir
                                    helm-source-ls-git
                                    helm-source-recentf)))
-    (global-set-key (kbd "C-x b") 'helm-mini)))
+    (global-set-key (kbd "C-'") 'helm-mini)))
