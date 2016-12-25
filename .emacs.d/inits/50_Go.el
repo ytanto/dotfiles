@@ -8,6 +8,7 @@
 (add-hook 'go-mode-hook 'flycheck-mode)
 (add-hook 'go-mode-hook
           (lambda ()
+            (setq gofmt-command "goimports")
             (setq tab-width 2)
             (go-eldoc-setup)
             (add-hook 'before-save-hook 'gofmt-before-save)
