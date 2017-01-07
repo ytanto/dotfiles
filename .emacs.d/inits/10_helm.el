@@ -1,4 +1,4 @@
-(when (require 'helm-config)
+(when (require 'helm-config)
   ;; helm-for-files
   ;; (define-key global-map (kbd "C-x b") 'helm-for-files)
   
@@ -19,4 +19,12 @@
                                    helm-source-files-in-current-dir
                                    helm-source-ls-git
                                    helm-source-recentf)))
-    (global-set-key (kbd "C-'") 'helm-mini)))
+    (global-set-key (kbd "C-'") 'helm-mini))
+
+  (when (require 'helm-git-grep)
+    (global-set-key (kbd "C-c g") 'helm-git-grep)
+    ;; Invoke 'helm-git-grep' from isearch.
+    (define-key isearch-mode-map (kbd "C-c g") 'helm-git-grep-from-isearch)
+    ;; Invoke 'helm-git-grep' from other helm.
+    (eval-after-load 'helm
+      '(define-key helm-map (kbd "C-c g") 'helm-git-grep-from-helm))))
