@@ -52,5 +52,6 @@
 (el-get-bundle yaml-mode)
 (el-get-bundle web-mode)
 (el-get-bundle init-loader)
+(el-get-bundle markdown-mode)
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))
