@@ -68,3 +68,6 @@ function peco-select-history() {
 }
 zle -N peco-select-history
 bindkey '^r' peco-select-history
+
+# リポジトリにcd
+alias g='cd $(ghq root)/$(ghq list | peco)'
