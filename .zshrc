@@ -71,3 +71,9 @@ bindkey '^r' peco-select-history
 
 # リポジトリにcd
 alias g='cd $(ghq root)/$(ghq list | peco)'
+
+# ------------------------------------------------------------------
+# Redis
+
+alias rs='redis-server'
+alias rc='redis-cli'
