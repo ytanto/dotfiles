@@ -74,6 +74,10 @@ alias g='cd $(ghq root)/$(ghq list | peco)'
 
 # ------------------------------------------------------------------
 # Redis
-
 alias rs='redis-server'
 alias rc='redis-cli'
+
+# Docker
+alias d='docker'
+alias dm='docker-machine'
+alias dc='docker-compose'
