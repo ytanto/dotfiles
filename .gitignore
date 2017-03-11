@@ -2,6 +2,7 @@
 .zprezto
 .zhistory
 .zcompdump
+.zcompcache
 .DS_Store
 .emacs.d/auto-save-list/*
 !.emacs.d/auto-save-list/.gitkeep
