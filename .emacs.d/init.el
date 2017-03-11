@@ -53,5 +53,6 @@
 (el-get-bundle web-mode)
 (el-get-bundle init-loader)
 (el-get-bundle markdown-mode)
+(el-get-bundle open-junk-file)
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))
