@@ -19,7 +19,7 @@
                                    helm-source-files-in-current-dir
                                    helm-source-ls-git
                                    helm-source-recentf)))
-    (global-set-key (kbd "C-'") 'helm-mini))
+    (global-set-key (kbd "C-i") 'helm-mini))
 
   (when (require 'helm-git-grep)
     (global-set-key (kbd "C-c g") 'helm-git-grep)
