@@ -38,6 +38,7 @@
 (el-get-bundle auto-complete)
 (el-get-bundle helm)
 (el-get-bundle helm-ls-git)
+(el-get-bundle helm-git-grep)
 (el-get-bundle undohist)
 (el-get-bundle undo-tree)
 (el-get-bundle color-moccur)
