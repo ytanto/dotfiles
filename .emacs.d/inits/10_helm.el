@@ -16,6 +16,7 @@
      '(helm-truncate-lines t)
      '(helm-delete-minibuffer-contents-from-point t)
      '(helm-mini-default-sources '(helm-source-buffers-list
+                                   helm-source-ls-git-status
                                    helm-source-files-in-current-dir
                                    helm-source-ls-git
                                    helm-source-recentf)))
