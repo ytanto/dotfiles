@@ -14,6 +14,13 @@
          (if (fboundp 'normal-top-level-add-subdirs-to-load-path)
              (normal-top-level-add-subdirs-to-load-path))))))
 
+;; Close all buffers
+(require 'cl)
+(defun clear-all-buffers ()
+  (interactive)
+  (loop for buffer being the buffers
+     do (kill-buffer buffer)))
+
 
 ;; lisp directory's path
 ;; Localeに合わせた環境の設定
