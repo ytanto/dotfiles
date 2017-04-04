@@ -16,3 +16,4 @@
 .emacs.d/cache/*
 !.emacs.d/cache/.gitkeep
 .emacs.d/recentf
+.emacs.d/.mc-lists.el
