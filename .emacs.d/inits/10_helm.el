@@ -11,6 +11,8 @@
   ;; C-h バックスペース
   (define-key helm-find-files-map (kbd "C-h") 'delete-backward-char)
 
+  (global-set-key (kbd "M-x") 'helm-M-x)
+
   (when (require 'helm-ls-git)
     (custom-set-variables
      '(helm-truncate-lines t)
