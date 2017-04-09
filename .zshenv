@@ -19,7 +19,7 @@ export ZDOTDIR=$HOME/dotfiles/
 export HISTFILESIZE=10000
 
 # settings for Go
-export GOPATH=$HOME/Documents/src/Go
+export GOPATH=$HOME/Documents/src/go
 export PATH=$GOPATH/bin:$PATH
 
 # export PATH=$HOME/bin:/usr/local/bin:$PATH:$GOPATH/bin
