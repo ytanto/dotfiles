@@ -46,6 +46,9 @@ setopt hist_ignore_all_dups
 # historyコマンドは履歴に登録しない
 setopt hist_save_no_dups
 
+# 余分な空白は詰めて記録
+setopt hist_reduce_blanks
+
 # 大文字小文字を区別しない（大文字を入力した場合は区別する）
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
