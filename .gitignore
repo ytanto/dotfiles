@@ -1,8 +1,8 @@
 *.zwc
-.zprezto
-.zhistory
-.zcompdump
-.zcompcache
+zsh/.zprezto
+zsh/.zhistory
+zsh/.zcompdump
+zsh/.zcompcache
 .DS_Store
 .emacs.d/auto-save-list/*
 !.emacs.d/auto-save-list/.gitkeep

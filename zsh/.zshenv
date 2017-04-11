@@ -15,7 +15,7 @@ fi
 # My configuration
 
 # settings for zsh
-export ZDOTDIR=$HOME/dotfiles/
+export ZDOTDIR=$HOME/dotfiles/zsh
 export HISTFILESIZE=10000
 
 # settings for Go
