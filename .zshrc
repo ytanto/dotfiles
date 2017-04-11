@@ -49,30 +49,6 @@ setopt hist_save_no_dups
 # 大文字小文字を区別しない（大文字を入力した場合は区別する）
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
-# ------------------------------------------------------------------
-# peco
-
-# history検索
-function peco-select-history() {
-    local tac
-    if which tac > /dev/null; then
-        tac="tac"
-    else
-        tac="tail -r"
-    fi
-    BUFFER=$(\history -n 1 | \
-        eval $tac | \
-        peco --query "$LBUFFER")
-    CURSOR=$#BUFFER
-    zle clear-screen
-}
-zle -N peco-select-history
-bindkey '^r' peco-select-history
-
-# リポジトリにcd
-alias g='cd $(ghq root)/$(ghq list | peco)'
-
-# ------------------------------------------------------------------
 # Redis
 alias rs='redis-server'
 alias rc='redis-cli'
@@ -83,3 +59,35 @@ alias dm='docker-machine'
 alias dc='docker-compose'
 alias dps='docker ps --format "{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Command}}\t{{.RunningFor}}"'
 alias de='docker exec -it `dps | peco | cut -f 1` /bin/bash'
+
+
+# Mac or Linux
+case ${OSTYPE} in
+    darwin*)
+        # peco
+
+        # history検索
+        function peco-select-history() {
+            local tac
+            if which tac > /dev/null; then
+                tac="tac"
+            else
+                tac="tail -r"
+            fi
+            BUFFER=$(\history -n 1 | \
+                         eval $tac | \
+                         peco --query "$LBUFFER")
+            CURSOR=$#BUFFER
+            zle clear-screen
+        }
+        zle -N peco-select-history
+        bindkey '^r' peco-select-history
+
+        # リポジトリにcd
+        alias g='cd $(ghq root)/$(ghq list | peco)'
+
+        ;;
+    linux*)
+        # for Linux
+        ;;
+esac
