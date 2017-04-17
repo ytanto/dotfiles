@@ -64,9 +64,12 @@ alias dps='docker ps --format "{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Command}}\t{
 alias de='docker exec -it `dps | peco | cut -f 1` /bin/bash'
 
 
+
 # Mac or Linux
 case ${OSTYPE} in
     darwin*)
+        # for Max
+
         # peco
 
         # history検索
@@ -92,5 +95,26 @@ case ${OSTYPE} in
         ;;
     linux*)
         # for Linux
+
+        # percol
+
+        # history検索
+        function select-history() {
+            local tac
+            if which tac > /dev/null; then
+                tac="tac"
+            else
+                tac="tail -r"
+            fi
+            BUFFER=$(fc -l -n 1 | eval $tac | percol --query "$LBUFFER")
+            CURSOR=$#BUFFER
+            zle -R -c
+        }
+        zle -N select-history
+        bindkey '^r' select-history
+
+        # リポジトリにcd
+        alias g='cd $(ghq root)/$(ghq list | percol)'
+
         ;;
 esac
