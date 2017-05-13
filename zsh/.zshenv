@@ -32,3 +32,13 @@ export LESSHISTFILE=-
 
 # ????
 export PATH=$HOME/bin:/usr/local/bin:$PATH
+
+case ${OSTYPE} in
+    darwin*)
+        export FILTERING_TOOL=peco
+        ;;
+    linux*)
+        # for Bow
+        export FILTERING_TOOL=percol
+        ;;
+esac

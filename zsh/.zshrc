@@ -63,58 +63,25 @@ alias dc='docker-compose'
 alias dps='docker ps --format "{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Command}}\t{{.RunningFor}}"'
 alias de='docker exec -it `dps | peco | cut -f 1` /bin/bash'
 
+# Git
+alias -g lb='`git branch | $FILTERING_TOOL --prompt "GIT BRANCH>" | head -n 1 | sed -e "s/^\*\s*//g"`'   
 
+# peco
 
-# Mac or Linux
-case ${OSTYPE} in
-    darwin*)
-        # for Max
+## history検索
+function select-history() {
+    local tac
+    if which tac > /dev/null; then
+        tac="tac"
+    else
+        tac="tail -r"
+    fi
+    BUFFER=$(fc -l -n 1 | eval $tac | $FILTERING_TOOL --query "$LBUFFER")
+    CURSOR=$#BUFFER
+    zle -R -c
+}
+zle -N select-history
+bindkey '^r' select-history
 
-        # peco
-
-        # history検索
-        function peco-select-history() {
-            local tac
-            if which tac > /dev/null; then
-                tac="tac"
-            else
-                tac="tail -r"
-            fi
-            BUFFER=$(\history -n 1 | \
-                         eval $tac | \
-                         peco --query "$LBUFFER")
-            CURSOR=$#BUFFER
-            zle clear-screen
-        }
-        zle -N peco-select-history
-        bindkey '^r' peco-select-history
-
-        # リポジトリにcd
-        alias g='cd $(ghq root)/$(ghq list | peco)'
-
-        ;;
-    linux*)
-        # for Linux
-
-        # percol
-
-        # history検索
-        function select-history() {
-            local tac
-            if which tac > /dev/null; then
-                tac="tac"
-            else
-                tac="tail -r"
-            fi
-            BUFFER=$(fc -l -n 1 | eval $tac | percol --query "$LBUFFER")
-            CURSOR=$#BUFFER
-            zle -R -c
-        }
-        zle -N select-history
-        bindkey '^r' select-history
-
-        # リポジトリにcd
-        alias g='cd $(ghq root)/$(ghq list | percol)'
-
-        ;;
-esac
+## リポジトリにcd
+alias g='cd $(ghq root)/$(ghq list | $FILTERING_TOOL)'
