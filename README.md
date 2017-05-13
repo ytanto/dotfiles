@@ -14,4 +14,7 @@ $ ln -s dotfiles/zsh/.zshenv ~/.zshenv
 # Vim
 $ ln -s dotfiles/vim/.vimrc ~/.vimrc
 
+# Git
+$ ln -s dotfiles/git/.gitconfig ~/.gitconfig
+
 ```
