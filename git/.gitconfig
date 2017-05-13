@@ -2,14 +2,15 @@
     path = ~/dotfiles/git/.gitconfig.local
 
 [alias]
-    gr = log --graph --date=short --decorate=short --pretty=format:'%Cgreen%h %Creset%cd %Cblue%cn %Cred%d %Creset%s'
     s = status
     ci = commit
     cm = commit -m
-    br = branch
+    b = branch
     co = checkout
     f = fetch
     p = pull
-
+    gr = log --graph --date=short --decorate=short --pretty=format:'%Cgreen%h %Creset%cd %Cblue%cn %Cred%d %Creset%s'
+    br = for-each-ref --format='%(authordate) %(refname)' --sort=-committerdate refs/heads
+    bra = for-each-ref --format='%(authordate) %(refname)' --sort=-committerdate refs/heads refs/remotes
 [ghq]
     root = ~/Documents/src
