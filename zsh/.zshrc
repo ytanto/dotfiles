@@ -85,3 +85,10 @@ bindkey '^r' select-history
 
 ## リポジトリにcd
 alias g='cd $(ghq root)/$(ghq list | $FILTERING_TOOL)'
+
+
+# source zsh-syntax-highlighting
+if [ -f $ZDOTDIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
+  source $ZDOTDIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
+ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets)

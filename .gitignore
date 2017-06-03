@@ -3,6 +3,7 @@ zsh/.zprezto
 zsh/.zhistory
 zsh/.zcompdump
 zsh/.zcompcache
+zsh/zsh-syntax-highlighting
 .DS_Store
 emacs/auto-save-list/*
 !emacs/auto-save-list/.gitkeep
