@@ -25,9 +25,9 @@
     (global-set-key (kbd "C-x C-i") 'helm-mini))
 
   (when (require 'helm-git-grep)
-    (global-set-key (kbd "C-x g") 'helm-git-grep)
+    (global-set-key (kbd "C-x C-a") 'helm-git-grep)
     ;; Invoke 'helm-git-grep' from isearch.
-    (define-key isearch-mode-map (kbd "C-x g") 'helm-git-grep-from-isearch)
+    (define-key isearch-mode-map (kbd "C-x C-a") 'helm-git-grep-from-isearch)
     ;; Invoke 'helm-git-grep' from other helm.
     (eval-after-load 'helm
-      '(define-key helm-map (kbd "C-x g") 'helm-git-grep-from-helm))))
+      '(define-key helm-map (kbd "C-x C-a") 'helm-git-grep-from-helm))))
