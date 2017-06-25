@@ -62,5 +62,6 @@
 (el-get-bundle init-loader)
 (el-get-bundle markdown-mode)
 (el-get-bundle open-junk-file)
+(el-get-bundle ace-isearch)
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))
