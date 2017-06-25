@@ -5,6 +5,7 @@
   ;; helm-find-files
   (define-key global-map (kbd "C-x C-f") 'helm-find-files)
 
+
   ;; tab 補完
   (define-key helm-find-files-map (kbd "<tab>") 'helm-execute-persistent-action)
 
@@ -12,6 +13,8 @@
   (define-key helm-find-files-map (kbd "C-h") 'delete-backward-char)
 
   (global-set-key (kbd "M-x") 'helm-M-x)
+
+  (global-set-key (kbd "C-x C-r") 'helm-imenu)
 
   (when (require 'helm-ls-git)
     (custom-set-variables
