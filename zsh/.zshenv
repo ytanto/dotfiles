@@ -30,6 +30,13 @@ export PATH=$HOME/.nodebrew/current/bin:$PATH
 # settings for less
 export LESSHISTFILE=- 
 
+# settings for npmbrew
+export PATH=$HOME/.npmbrew/current/bin:$PATH
+
+# settings for pyenv
+export PYENV_ROOT=$HOME/.pyenv
+export PATH=$PYENV_ROOT/bin:$PATH
+
 # ????
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 
