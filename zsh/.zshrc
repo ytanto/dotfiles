@@ -95,3 +95,6 @@ ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets)
 
 # pyenv
 eval "$(pyenv init -)"
+
+# docker
+eval $(docker-machine env default)
