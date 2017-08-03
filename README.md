@@ -6,6 +6,7 @@
 $ git clone https://github.com/mochi8k/dotfiles.git
 
 # Emacs
+$ brew install emacs --with-cocoa --with-gnutls
 $ ln -s dotfiles/emacs ~/.emacs.d
 
 # Zsh
