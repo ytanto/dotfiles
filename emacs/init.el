@@ -59,6 +59,7 @@
 (el-get-bundle coffee-mode)
 (el-get-bundle yaml-mode)
 (el-get-bundle web-mode)
+(el-get-bundle json-mode)
 (el-get-bundle init-loader)
 (el-get-bundle markdown-mode)
 (el-get-bundle open-junk-file)
