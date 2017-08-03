@@ -2,6 +2,7 @@
     path = ~/dotfiles/git/.gitconfig.local
 [core]
     excludesfile = ~/.gitignore_global
+  	whitespace = cr-at-eol
 [alias]
     s = status
     ci = commit
