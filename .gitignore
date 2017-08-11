@@ -18,5 +18,6 @@ emacs/cache/*
 !emacs/cache/.gitkeep
 emacs/recentf
 emacs/.mc-lists.el
+emacs/bookmarks
 git/.gitconfig.local
 git/.gitignore_global
