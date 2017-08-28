@@ -66,5 +66,6 @@
 (el-get-bundle ace-isearch)
 (el-get-bundle migemo)
 (el-get-bundle minimap)
+(el-get-bundle anzu)
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))
