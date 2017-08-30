@@ -67,6 +67,7 @@
 (el-get-bundle migemo)
 (el-get-bundle minimap)
 (el-get-bundle anzu)
+(el-get-bundle magit)
 (el-get-bundle git-gutter+)
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))
