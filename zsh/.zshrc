@@ -64,7 +64,10 @@ alias dps='docker ps --format "{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Command}}\t{
 alias de='docker exec -it `dps | peco | cut -f 1` /bin/bash'
 
 # Git
-alias -g lb='`git branch | $FILTERING_TOOL --prompt "GIT BRANCH>" | head -n 1 | sed -e "s/^\*\s*//g"`'   
+alias -g lb='`git branch | $FILTERING_TOOL --prompt "GIT BRANCH>" | head -n 1 | sed -e "s/^\*\s*//g"`'
+
+# Emacs
+alias ec='emacsclient -n'
 
 # peco
 
