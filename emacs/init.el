@@ -42,7 +42,7 @@
 (el-get 'sync)
 
 (el-get-bundle exec-path-from-shell)
-(el-get-bundle auto-complete)
+;; (el-get-bundle auto-complete)
 (el-get-bundle helm)
 (el-get-bundle helm-ls-git)
 (el-get-bundle helm-git-grep)
@@ -69,5 +69,6 @@
 (el-get-bundle anzu)
 (el-get-bundle magit)
 (el-get-bundle git-gutter+)
+(el-get-bundle company-mode)
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))
