@@ -14,7 +14,7 @@
     p = pull
     pp = pull --prune
     d = diff
-    dc = diff --cached
+    di = diff --cached
     gr = log --graph --date=short --decorate=short --pretty=format:'%Cgreen%h %Creset%cd %Cblue%cn %Cred%d %Creset%s'
     br = for-each-ref --format='%(authordate) %(refname)' --sort=-committerdate refs/heads
     bra = for-each-ref --format='%(authordate) %(refname)' --sort=-committerdate refs/heads refs/remotes
