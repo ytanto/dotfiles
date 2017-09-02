@@ -6,6 +6,10 @@
 $ git clone https://github.com/mochi8k/dotfiles.git
 
 # Emacs
+
+$ npm instlal -g tern
+$ ~/dotfiles/emacs/config/tern-config.json ~/.tern-config
+
 $ brew install emacs --with-cocoa --with-gnutls
 $ ln -s dotfiles/emacs ~/.emacs.d
 

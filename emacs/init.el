@@ -70,5 +70,6 @@
 (el-get-bundle magit)
 (el-get-bundle git-gutter+)
 (el-get-bundle company-mode)
+(el-get-bundle company-tern)
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))
