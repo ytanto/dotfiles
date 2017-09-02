@@ -69,6 +69,9 @@ alias -g lb='`git branch | $FILTERING_TOOL --prompt "GIT BRANCH>" | head -n 1 | 
 # Emacs
 alias ec='emacsclient -n'
 
+# Vagrant
+alias v='vagrant'
+
 # peco
 
 ## history検索
