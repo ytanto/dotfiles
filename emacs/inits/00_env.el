@@ -2,6 +2,10 @@
   (let ((envs '("PATH")))
     (exec-path-from-shell-copy-envs envs)))
 
+(if window-system (progn
+   (server-start)
+))
+
 ;; タブをスペースで扱う
 (setq-default indent-tabs-mode nil)
 
