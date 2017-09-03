@@ -10,6 +10,9 @@ $ git clone https://github.com/mochi8k/dotfiles.git
 $ npm instlal -g tern
 $ ~/dotfiles/emacs/config/tern-config.json ~/.tern-config
 
+$ npm install -g js-beautify
+$ https://github.com/yasuyk/web-beautify.git /Users/tannaka/dotfiles/emacs/recipes/web-beautify
+
 $ brew install emacs --with-cocoa --with-gnutls
 $ ln -s dotfiles/emacs ~/.emacs.d
 

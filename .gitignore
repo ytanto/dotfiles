@@ -16,6 +16,8 @@ emacs/undohist/*
 !emacs/undohist/.gitkeep
 emacs/cache/*
 !emacs/cache/.gitkeep
+emacs/recipes/*
+!emacs/recipes/.gitkeep
 emacs/recentf
 emacs/.mc-lists.el
 emacs/bookmarks
