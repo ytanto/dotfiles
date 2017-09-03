@@ -22,5 +22,6 @@ emacs/recentf
 emacs/.mc-lists.el
 emacs/bookmarks
 emacs/ac-comphist.dat
+emacs/old
 git/.gitconfig.local
 git/.gitignore_global
