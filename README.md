@@ -8,7 +8,7 @@ $ git clone https://github.com/mochi8k/dotfiles.git
 # Emacs
 
 $ npm instlal -g tern
-$ ~/dotfiles/emacs/config/tern-config.json ~/.tern-config
+$ ln -s ~/dotfiles/emacs/config/tern-config.json ~/.tern-config
 
 $ npm install -g js-beautify
 $ git clone https://github.com/yasuyk/web-beautify.git /Users/tannaka/dotfiles/emacs/recipes/web-beautify
