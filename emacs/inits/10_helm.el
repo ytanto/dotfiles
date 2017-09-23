@@ -24,7 +24,8 @@
                                    helm-source-ls-git-status
                                    helm-source-files-in-current-dir
                                    helm-source-ls-git
-                                   helm-source-recentf)))
+                                   helm-source-recentf
+                                   helm-source-ghq)))
     (global-set-key (kbd "C-x C-i") 'helm-mini))
 
   (when (require 'helm-git-grep)
