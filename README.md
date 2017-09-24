@@ -6,6 +6,8 @@
 $ git clone https://github.com/mochi8k/dotfiles.git
 
 # Emacs
+$ npm install -g eslint
+npm install -g eslint babel-eslint eslint-plugin-react
 
 $ npm instlal -g tern
 $ ln -s ~/dotfiles/emacs/config/tern-config.json ~/.tern-config
