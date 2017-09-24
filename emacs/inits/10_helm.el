@@ -18,16 +18,16 @@
 
   (when (require 'helm-ls-git)
     (when (require 'helm-ghq)
-    (custom-set-variables
-     '(helm-truncate-lines t)
-     '(helm-delete-minibuffer-contents-from-point t)
-     '(helm-mini-default-sources '(helm-source-buffers-list
-                                   helm-source-ls-git-status
-                                   helm-source-files-in-current-dir
-                                   helm-source-ls-git
-                                   helm-source-recentf
-                                   helm-source-ghq)))))
-    (global-set-key (kbd "C-x C-i") 'helm-mini))
+      (custom-set-variables
+       '(helm-truncate-lines t)
+       '(helm-delete-minibuffer-contents-from-point t)
+       '(helm-mini-default-sources '(helm-source-buffers-list
+                                     helm-source-ls-git-status
+                                     helm-source-files-in-current-dir
+                                     helm-source-ls-git
+                                     helm-source-recentf
+                                     helm-source-ghq)))
+      (global-set-key (kbd "C-x C-i") 'helm-mini)))
 
   (when (require 'helm-git-grep)
     (global-set-key (kbd "C-x C-a") 'helm-git-grep)
