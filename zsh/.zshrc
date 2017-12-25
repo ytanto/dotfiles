@@ -107,6 +107,3 @@ eval "$(pyenv init -)"
 
 # rbenv
 eval "$(rbenv init -)"
-
-# docker
-eval $(docker-machine env default)
