@@ -72,6 +72,9 @@ alias ec='emacsclient -n'
 # Vagrant
 alias v='vagrant'
 
+# kubernetes
+alias kc='kubectl'
+
 # peco
 
 ## history検索
