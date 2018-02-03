@@ -72,6 +72,9 @@ alias ec='emacsclient -n'
 # Vagrant
 alias v='vagrant'
 
+# Kubernetes
+alias kc='kubectl'
+
 # peco
 
 ## history検索
@@ -104,3 +107,10 @@ eval "$(pyenv init -)"
 
 # rbenv
 eval "$(rbenv init -)"
+
+# GCP
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/tannaka/google-cloud-sdk/path.zsh.inc' ]; then source '/Users/tannaka/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/tannaka/google-cloud-sdk/completion.zsh.inc' ]; then source '/Users/tannaka/google-cloud-sdk/completion.zsh.inc'; fi
