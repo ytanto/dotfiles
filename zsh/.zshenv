@@ -14,8 +14,6 @@ fi
 
 # My configuration
 
-export PATH=$HOME/bin:/usr/local/bin:$PATH
-
 # settings for zsh
 export ZDOTDIR=$HOME/dotfiles/zsh
 export HISTFILESIZE=10000
@@ -38,6 +36,8 @@ export PATH=$HOME/.npmbrew/current/bin:$PATH
 # settings for pyenv
 export PYENV_ROOT=$HOME/.pyenv
 export PATH=$PYENV_ROOT/bin:$PATH
+
+export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 case ${OSTYPE} in
     darwin*)
