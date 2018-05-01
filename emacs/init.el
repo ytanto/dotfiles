@@ -1,4 +1,3 @@
-
 ;; Added by Package.el.  This must come before configurations of
 ;; installed packages.  Don't delete this line.  If you don't want it,
 ;; just comment it out by adding a semicolon to the start of the line.
@@ -48,6 +47,7 @@
 (el-get-bundle helm-ls-git)
 (el-get-bundle helm-git-grep)
 (el-get-bundle helm-ghq)
+(el-get-bundle helm-ag)
 (el-get-bundle undohist)
 (el-get-bundle undo-tree)
 (el-get-bundle color-moccur)

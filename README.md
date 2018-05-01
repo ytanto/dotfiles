@@ -15,6 +15,8 @@ $ ln -s ~/dotfiles/emacs/config/tern-config.json ~/.tern-config
 $ npm install -g js-beautify
 $ git clone https://github.com/yasuyk/web-beautify.git /Users/tannaka/dotfiles/emacs/recipes/web-beautify
 
+$ brew install the_silver_searcher
+
 $ brew install emacs --with-cocoa --with-gnutls
 $ ln -s dotfiles/emacs ~/.emacs.d
 
