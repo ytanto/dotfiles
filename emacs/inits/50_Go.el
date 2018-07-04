@@ -7,6 +7,12 @@
 (require 'go-eldoc nil t)
 (add-hook 'go-mode-hook 'flycheck-mode)
 (add-hook 'go-mode-hook
+          ;; golangではハードタブを可視化しない
+          (setq whitespace-style
+                '(face
+                  trailing
+                  spaces
+                  space-mark))
           (lambda ()
             (setq gofmt-command "goimports")
             (setq tab-width 2)
