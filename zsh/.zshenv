@@ -37,6 +37,11 @@ export PATH=$HOME/.npmbrew/current/bin:$PATH
 export PYENV_ROOT=$HOME/.pyenv
 export PATH=$PYENV_ROOT/bin:$PATH
 
+# settings for cd-bookmark
+fpath=($HOME/dotfiles/functions/cd-bookmark(N-/) $fpath)
+autoload -Uz cd-bookmark
+alias cb='cd-bookmark'
+
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 case ${OSTYPE} in
