@@ -74,5 +74,6 @@
 (el-get-bundle git-gutter+)
 (el-get-bundle company-mode)
 (el-get-bundle company-tern)
+(el-get-bundle nginx-mode)
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))
