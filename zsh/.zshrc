@@ -75,6 +75,9 @@ alias v='vagrant'
 # Kubernetes
 alias kc='kubectl'
 
+# make
+alias a='make'
+
 # peco
 
 ## history検索
