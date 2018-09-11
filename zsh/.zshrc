@@ -98,6 +98,18 @@ bindkey '^r' select-history
 ## リポジトリにcd
 alias g='cd $(ghq root)/$(ghq list | $FILTERING_TOOL)'
 
+## make with peco
+function peco-make () {
+    local targets=$(make -qp | awk -F':' '/^[a-zA-Z0-9][^$#\/\t=]*:([^=]|$)/ {split($1,A,/ /);for(i in A)print A[i]}')
+    local target=$(echo ${targets} | sort -f | peco --query "$LBUFFER")
+    if [ -n "$target" ]; then
+        BUFFER="make ${target}"
+        zle accept-line
+    fi
+    zle clear-screen
+}
+zle -N peco-make
+bindkey '^[' peco-make
 
 # source zsh-syntax-highlighting
 if [ -f $ZDOTDIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
