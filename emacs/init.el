@@ -75,5 +75,6 @@
 (el-get-bundle company-mode)
 (el-get-bundle company-tern)
 (el-get-bundle nginx-mode)
+(el-get-bundle ruby-end)
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))
