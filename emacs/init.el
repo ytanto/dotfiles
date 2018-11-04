@@ -76,5 +76,6 @@
 (el-get-bundle company-tern)
 (el-get-bundle nginx-mode)
 (el-get-bundle ruby-end)
+(el-get-bundle dockerfile-mode)
 (when (require 'init-loader nil t)
   (init-loader-load "~/.emacs.d/inits"))
