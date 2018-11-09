@@ -27,5 +27,3 @@
     branch = auto
     status = auto
     interactive = auto
-[ghq]
-    root = ~/Documents/src
