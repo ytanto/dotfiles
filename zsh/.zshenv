@@ -53,3 +53,6 @@ case ${OSTYPE} in
         export FILTERING_TOOL=percol
         ;;
 esac
+
+# settings for Genymotion
+export PATH=/Applications/Genymotion.app/Contents/MacOS/tools:$PATH
