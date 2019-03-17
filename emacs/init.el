@@ -61,6 +61,7 @@
 (el-get-bundle coffee-mode)
 (el-get-bundle yaml-mode)
 (el-get-bundle web-mode)
+(el-get-bundle rjsx-mode)
 (el-get-bundle json-mode)
 (el-get-bundle csharp-mode)
 (el-get-bundle init-loader)
