@@ -78,6 +78,9 @@ alias kc='kubectl'
 # make
 alias a='make'
 
+# svn
+alias s='svn'
+
 # peco
 
 ## history検索
@@ -132,3 +135,8 @@ if [ -f ${HOME}/google-cloud-sdk/completion.zsh.inc ]; then source ${HOME}/googl
 
 # Tab Title
 function chpwd() { ls; echo -ne "\033]0;$(pwd | rev | awk -F \/ '{print "/"$1"/"$2}'| rev)\007"}
+
+# XAMPPを使う時だけコメントを解除する。pyenvが変になる。
+# settins for XAMPP
+# export PATH=$PATH:/Applications/XAMPP/xamppfiles/bin
+# export PATH=/Applications/XAMPP/xamppfiles/bin:$PATH
