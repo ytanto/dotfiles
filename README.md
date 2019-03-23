@@ -2,6 +2,8 @@
 
 ## Getting Started
 
+### Mac
+
 ```
 # brew cask
 brew cask install google-japanese-ime
@@ -14,24 +16,31 @@ brew cask install hyperswitch
 brew cask install emacs
 brew tap caskroom/fonts
 brew cask install font-ricty-diminished
+brew cask install docker
 
 # brew
 brew install git
+brew install emacs
+brew install pyenv
+brew install rbenv
+brew install the_silver_searcher
+brew install peco
+brew install zsh
+sudo vi /etc/shells
+chsh -s /usr/local/bin/zsh
 brew install nodebrew
 mkdir -p ~/.nodebrew/src
 nodebrew install-binary latest
 nodebrew use latest
-brew install emacs
-brew install pyenv
-brew install rbenv
-brew install zsh
-brew install the_silver_searcher
+```
 
+### dotfiles
+
+
+```
 # dotfiles
 
 $ git clone https://github.com/ytanto/dotfiles.git
-sudo vi /etc/shells
-chsh -s /usr/local/bin/zsh
 
 ## Zsh
 $ ln -s dotfiles/zsh/.zshenv ~/.zshenv
