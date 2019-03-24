@@ -54,5 +54,9 @@ case ${OSTYPE} in
         ;;
 esac
 
+# settings for Android Studio
+export ANDROID_SDK=$HOME/Library/Android/sdk
+export PATH=$HOME/Library/Android/sdk/platform-tools:$PATH
+
 # settings for Genymotion
 export PATH=/Applications/Genymotion.app/Contents/MacOS/tools:$PATH
