@@ -31,6 +31,7 @@ brew install the_silver_searcher
 brew install peco
 brew install ghq
 brew install yarn
+brew install tig
 
 brew install zsh
 sudo vi /etc/shells
