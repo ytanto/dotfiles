@@ -25,6 +25,12 @@
 ;; Localeに合わせた環境の設定
 (set-locale-environment nil)
 
+;; Zshの環境変数を読み込む
+(let ((zshpath (shell-command-to-string "/usr/local/bin/zsh -c 'printenv PATH'")))
+  (let ((pathlst (split-string zshpath ":")))
+    (setq exec-path pathlst))
+  (setq eshell-path-env zshpath)
+  (setenv "PATH" zshpath))
 
 ;;; el-get
 
