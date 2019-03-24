@@ -5,7 +5,7 @@
 ### Mac
 
 ```
-# brew cask
+# brew cask: must
 brew cask install google-japanese-ime
 brew cask install iterm2
 brew cask install shiftit
@@ -17,6 +17,10 @@ brew cask install emacs
 brew tap caskroom/fonts
 brew cask install font-ricty-diminished
 brew cask install docker
+brew cask install virtualbox
+
+# brew cask: optional
+brew cask install react-native-debugger
 
 # brew
 brew install git
@@ -25,17 +29,24 @@ brew install pyenv
 brew install rbenv
 brew install the_silver_searcher
 brew install peco
+brew install ghq
+brew install yarn
+
 brew install zsh
 sudo vi /etc/shells
 chsh -s /usr/local/bin/zsh
+
 brew install nodebrew
 mkdir -p ~/.nodebrew/src
 nodebrew install-binary latest
 nodebrew use latest
+
+# KeyRepeat
+defaults write -g InitialKeyRepeat -int 12 # normal minimum is 15 (225 ms)
+defaults write -g KeyRepeat -int 1 # normal minimum is 2 (30 ms)
 ```
 
 ### dotfiles
-
 
 ```
 # dotfiles
