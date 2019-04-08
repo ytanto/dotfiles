@@ -6,6 +6,8 @@
   ;; (custom-set-variables
   ;;  '(company-idle-delay nil))
 
+  (setq company-idle-delay 0) ; デフォルトは0.5
+
   (global-set-key (kbd "C-M-i") 'company-complete)
 
   ;; C-n, C-pで補完候補を次/前の候補を選択
