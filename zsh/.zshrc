@@ -100,6 +100,7 @@ bindkey '^r' select-history
 
 ## リポジトリにcd
 alias g='cd $(ghq root)/$(ghq list | $FILTERING_TOOL)'
+alias gh='ghq look $(ghq list | $FILTERING_TOOL)'
 
 ## make with peco
 function peco-make () {
