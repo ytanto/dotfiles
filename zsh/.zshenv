@@ -60,3 +60,9 @@ export PATH=$HOME/Library/Android/sdk/platform-tools:$PATH
 
 # settings for Genymotion
 export PATH=/Applications/Genymotion.app/Contents/MacOS/tools:$PATH
+
+# settins for SqlPLus
+export ORACLE_HOME=~/Documents/src/cotos/sqlplus/instantclient_18_1
+export PATH=$ORACLE_HOME:$PATH
+export DYLD_LIBRARY_PATH=~/Documents/src/cotos/sqlplus/instantclient_18_1
+export NLS_LANG=Japanese_Japan.AL32UTF8

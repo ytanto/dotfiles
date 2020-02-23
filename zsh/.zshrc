@@ -100,6 +100,7 @@ bindkey '^r' select-history
 
 ## リポジトリにcd
 alias g='cd $(ghq root)/$(ghq list | $FILTERING_TOOL)'
+alias gh='ghq look $(ghq list | $FILTERING_TOOL)'
 
 ## make with peco
 function peco-make () {
@@ -118,6 +119,12 @@ bindkey '^[' peco-make
 if [ -f $ZDOTDIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
   source $ZDOTDIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi
+
+# Homebrewで入れた場合
+if [ -f /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
+    source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
+
 ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets)
 
 # pyenv
