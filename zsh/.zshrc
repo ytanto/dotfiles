@@ -73,7 +73,7 @@ alias ec='emacsclient -n'
 alias v='vagrant'
 
 # Kubernetes
-alias kc='kubectl'
+alias k='kubectl'
 
 # make
 alias a='make'
