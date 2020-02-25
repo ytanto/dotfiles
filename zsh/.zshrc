@@ -75,6 +75,7 @@ alias v='vagrant'
 # Kubernetes
 alias k='kubectl'
 alias ka='kubectl get all'
+export EDITOR=vim
 
 # make
 alias a='make'
