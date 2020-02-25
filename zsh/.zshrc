@@ -74,6 +74,7 @@ alias v='vagrant'
 
 # Kubernetes
 alias k='kubectl'
+alias ka='kubectl get all'
 
 # make
 alias a='make'
