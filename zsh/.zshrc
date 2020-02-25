@@ -76,6 +76,7 @@ alias v='vagrant'
 alias k='kubectl'
 alias ka='kubectl get all'
 export EDITOR=vim
+source <(kubectl completion zsh)
 
 # make
 alias a='make'
