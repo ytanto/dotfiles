@@ -16,6 +16,8 @@ brew cask install hyperswitch
 brew cask install emacs
 brew cask install docker
 brew cask install virtualbox
+brew cask install fork
+brew cask install tableplus
 
 # brew cask: optional
 brew cask install react-native-debugger
