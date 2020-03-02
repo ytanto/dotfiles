@@ -72,7 +72,7 @@ $ ln -s ~/dotfiles/emacs/config/tern-config.json ~/.tern-config
 
 ## beautify
 $ npm install -g js-beautify
-$ git clone https://github.com/yasuyk/web-beautify.git /Users/tannaka/dotfiles/emacs/recipes/web-beautify
+$ git clone https://github.com/yasuyk/web-beautify.git ~/dotfiles/emacs/recipes/web-beautify
 
 ## Emacs
 $ npm install -g eslint babel-eslint eslint-plugin-react
