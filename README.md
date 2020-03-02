@@ -32,6 +32,7 @@ brew install peco
 brew install ghq
 brew install yarn
 brew install tig
+brew install kubectl
 brew install zsh-syntax-highlighting
 
 brew install zsh
@@ -78,5 +79,6 @@ $ git clone https://github.com/yasuyk/web-beautify.git /Users/tannaka/dotfiles/e
 ## Emacs
 $ npm install -g eslint babel-eslint eslint-plugin-react
 $ ln -s dotfiles/emacs ~/.emacs.d
+
 
 ```
