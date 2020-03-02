@@ -14,8 +14,6 @@ brew cask install alfred
 brew cask install kindle
 brew cask install hyperswitch
 brew cask install emacs
-brew tap caskroom/fonts
-brew cask install font-ricty-diminished
 brew cask install docker
 brew cask install virtualbox
 
@@ -81,4 +79,11 @@ $ npm install -g eslint babel-eslint eslint-plugin-react
 $ ln -s dotfiles/emacs ~/.emacs.d
 
 
+```
+
+## deprecated
+
+```
+brew tap caskroom/fonts
+brew cask install font-ricty-diminished
 ```
