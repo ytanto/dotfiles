@@ -27,6 +27,7 @@ brew install git
 brew install emacs
 brew install pyenv
 brew install rbenv
+brew install go
 brew install the_silver_searcher
 brew install peco
 brew install ghq
