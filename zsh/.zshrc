@@ -77,6 +77,10 @@ alias k='kubectl'
 alias ka='kubectl get all'
 source <(kubectl completion zsh)
 
+# Vim
+export EDITOR=vim
+
+
 # make
 alias a='make'
 

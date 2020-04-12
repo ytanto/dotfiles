@@ -8,16 +8,15 @@
 # brew cask: must
 brew cask install google-japanese-ime
 brew cask install iterm2
-brew cask install shiftit
 brew cask install google-chrome
 brew cask install alfred
 brew cask install kindle
 brew cask install hyperswitch
 brew cask install emacs
-brew tap caskroom/fonts
-brew cask install font-ricty-diminished
 brew cask install docker
 brew cask install virtualbox
+brew cask install fork
+brew cask install tableplus
 
 # brew cask: optional
 brew cask install react-native-debugger
@@ -27,11 +26,13 @@ brew install git
 brew install emacs
 brew install pyenv
 brew install rbenv
+brew install go
 brew install the_silver_searcher
 brew install peco
 brew install ghq
 brew install yarn
 brew install tig
+brew install kubectl
 brew install zsh-syntax-highlighting
 
 brew install zsh
@@ -73,10 +74,18 @@ $ ln -s ~/dotfiles/emacs/config/tern-config.json ~/.tern-config
 
 ## beautify
 $ npm install -g js-beautify
-$ git clone https://github.com/yasuyk/web-beautify.git /Users/tannaka/dotfiles/emacs/recipes/web-beautify
+$ git clone https://github.com/yasuyk/web-beautify.git ~/dotfiles/emacs/recipes/web-beautify
 
 ## Emacs
 $ npm install -g eslint babel-eslint eslint-plugin-react
 $ ln -s dotfiles/emacs ~/.emacs.d
 
+
+```
+
+## deprecated
+
+```
+brew tap caskroom/fonts
+brew cask install font-ricty-diminished
 ```
