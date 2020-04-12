@@ -74,6 +74,8 @@ alias v='vagrant'
 
 # Kubernetes
 alias k='kubectl'
+alias ka='kubectl get all'
+source <(kubectl completion zsh)
 
 # make
 alias a='make'
@@ -134,11 +136,8 @@ eval "$(pyenv init -)"
 eval "$(rbenv init -)"
 
 # GCP
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f ${HOME}/google-cloud-sdk/path.zsh.inc ]; then source ${HOME}/google-cloud-sdk/path.zsh.inc; fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f ${HOME}/google-cloud-sdk/completion.zsh.inc ]; then source ${HOME}/google-cloud-sdk/completion.zsh.inc; fi
+source "/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
+source "/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
 
 # Tab Title
 function chpwd() { ls; echo -ne "\033]0;$(pwd | rev | awk -F \/ '{print "/"$1"/"$2}'| rev)\007"}
