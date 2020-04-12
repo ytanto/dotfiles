@@ -8,7 +8,6 @@
 # brew cask: must
 brew cask install google-japanese-ime
 brew cask install iterm2
-brew cask install shiftit
 brew cask install google-chrome
 brew cask install alfred
 brew cask install kindle
