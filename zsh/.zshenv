@@ -66,3 +66,6 @@ export ORACLE_HOME=~/Documents/src/cotos/sqlplus/instantclient_18_1
 export PATH=$ORACLE_HOME:$PATH
 export DYLD_LIBRARY_PATH=~/Documents/src/cotos/sqlplus/instantclient_18_1
 export NLS_LANG=Japanese_Japan.AL32UTF8
+
+# settings for Homebrew
+export PATH=$PATH:/opt/homebrew/bin
