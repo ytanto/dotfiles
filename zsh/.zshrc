@@ -150,3 +150,17 @@ function chpwd() { ls; echo -ne "\033]0;$(pwd | rev | awk -F \/ '{print "/"$1"/"
 # settins for XAMPP
 # export PATH=$PATH:/Applications/XAMPP/xamppfiles/bin
 # export PATH=/Applications/XAMPP/xamppfiles/bin:$PATH
+
+# multipass
+alias m=multipass
+
+# .zshrc
+# alias make1='make $1 SSH_HOST=isucon10-qualify-1 SSH_BENCH_HOST=isucon10-qualify-1'
+# alias make2='make $1 SSH_HOST=isucon10-qualify-2 SSH_BENCH_HOST=isucon10-qualify-2'
+# alias make3='make $1 SSH_HOST=isucon10-qualify-3 SSH_BENCH_HOST=isucon10-qualify-3'
+# alias make1='make $1 SSH_HOST=isucon11-qualify-1 SSH_BENCH_HOST=isucon11-qualify-1'
+# alias make2='make $1 SSH_HOST=isucon11-qualify-2 SSH_BENCH_HOST=isucon11-qualify-2'
+# alias make3='make $1 SSH_HOST=isucon11-qualify-3 SSH_BENCH_HOST=isucon11-qualify-3'
+alias make1='make $1 SSH_HOST=isucon12-qualify-1 SSH_BENCH_HOST=isucon12-qualify-1'
+alias make2='make $1 SSH_HOST=isucon12-qualify-2 SSH_BENCH_HOST=isucon12-qualify-2'
+alias make3='make $1 SSH_HOST=isucon12-qualify-3 SSH_BENCH_HOST=isucon12-qualify-3'
