@@ -69,3 +69,12 @@ export NLS_LANG=Japanese_Japan.AL32UTF8
 
 # settings for Homebrew
 export PATH=$PATH:/opt/homebrew/bin
+
+# lima
+#export DOCKER_HOST=unix:///${HOME}/.lima/docker/sock/docker.sock
+
+# .Net
+export PATH=$PATH:$HOME/.dotnet/tools
+
+# psql
+export PATH=/opt/homebrew/opt/libpq/bin:$PATH
