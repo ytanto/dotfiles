@@ -38,7 +38,7 @@ export PYENV_ROOT=$HOME/.pyenv
 export PATH=$PYENV_ROOT/bin:$PATH
 
 # settings for Poetry
-export PATH=$HOME/.local/bin
+export PATH=$HOME/.local/bin:$PATH
 
 # settings for cd-bookmark
 fpath=($HOME/dotfiles/functions/cd-bookmark(N-/) $fpath)
