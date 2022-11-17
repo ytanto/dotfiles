@@ -65,6 +65,7 @@ alias de='docker exec -it `dps | peco | cut -f 1` /bin/bash'
 
 # Git
 alias -g lb='`git branch | $FILTERING_TOOL --prompt "GIT BRANCH>" | head -n 1 | sed -e "s/^\*\s*//g"`'
+alias -g rb='`git branch -r | $FILTERING_TOOL --prompt "GIT BRANCH>" | head -n 1 | sed -e "s/^\*\s*//g" | sed "s/origin\///"`'
 
 # Emacs
 alias ec='emacsclient -n'
