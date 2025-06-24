@@ -76,7 +76,7 @@ alias v='vagrant'
 # Kubernetes
 alias k='kubectl'
 alias ka='kubectl get all'
-source <(kubectl completion zsh)
+# source <(kubectl completion zsh)
 
 # Vim
 export EDITOR=vim
@@ -107,7 +107,7 @@ bindkey '^r' select-history
 
 ## リポジトリにcd
 alias g='cd $(ghq root)/$(ghq list | $FILTERING_TOOL)'
-alias gh='ghq look $(ghq list | $FILTERING_TOOL)'
+# alias gh='ghq look $(ghq list | $FILTERING_TOOL)'
 
 ## make with peco
 function peco-make () {
@@ -165,3 +165,30 @@ alias m=multipass
 alias make1='make $1 SSH_HOST=isucon12-qualify-1 SSH_BENCH_HOST=isucon12-qualify-1'
 alias make2='make $1 SSH_HOST=isucon12-qualify-2 SSH_BENCH_HOST=isucon12-qualify-2'
 alias make3='make $1 SSH_HOST=isucon12-qualify-3 SSH_BENCH_HOST=isucon12-qualify-3'
+export VOLTA_HOME="$HOME/.volta"
+export PATH="$VOLTA_HOME/bin:$PATH"
+export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
+
+
+. /opt/homebrew/opt/asdf/libexec/asdf.sh
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/tannaka/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/tannaka/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/tannaka/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/tannaka/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
+## [Completion]
+## Completion scripts setup. Remove the following line to uninstall
+[[ -f /Users/tannaka/.dart-cli-completion/zsh-config.zsh ]] && . /Users/tannaka/.dart-cli-completion/zsh-config.zsh || true
+## [/Completion]
+
+# Flutter
+export PATH="$PATH":"$HOME/fvm/default/bin"
+# export FLUTTER_ROOT="/Users/tannaka/fvm/default/bin/flutter"
+# export FLUTTER_ROOT=$HOME/fvm/default/bin
+
+
+# Volta
+export VOLTA_FEATURE_PNPM=1
+

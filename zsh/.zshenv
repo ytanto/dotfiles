@@ -77,7 +77,7 @@ export PATH=$PATH:/opt/homebrew/bin
 #export DOCKER_HOST=unix:///${HOME}/.lima/docker/sock/docker.sock
 
 # .Net
-export PATH=$PATH:$HOME/.dotnet/tools
+# export PATH=$PATH:$HOME/.dotnet/tools
 
 # psql
 export PATH=/opt/homebrew/opt/libpq/bin:$PATH
