@@ -1,34 +1,28 @@
 {
   "permissions": {
     "allow": [
-      // ファイルシステム操作
       "Bash(ls:*)",
       "Bash(cat:*)",
       "Bash(mkdir:*)",
       "Bash(find:*)",
 
-      // 検索・フィルタリング
       "Bash(grep:*)",
       "Bash(rg:*)",
 
-      // プロセス管理
       "Bash(lsof:*)",
       "Bash(time:*)",
 
-      // npm コマンド
       "Bash(npm install:*)",
       "Bash(npm start)",
       "Bash(npm test)",
       "Bash(npm run lint)",
       "Bash(npm run test:*)",
 
-      // yarn コマンド
       "Bash(yarn:*)",
       "Bash(yarn lint)",
       "Bash(yarn list:*)",
       "Bash(yarn outdated)",
 
-      // npx コマンド
       "Bash(npx jest:*)",
       "Bash(npx vitest run:*)",
       "Bash(npx expo install:*)"
