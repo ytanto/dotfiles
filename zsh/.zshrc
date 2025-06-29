@@ -162,6 +162,14 @@ alias m=multipass
 # alias make1='make $1 SSH_HOST=isucon11-qualify-1 SSH_BENCH_HOST=isucon11-qualify-1'
 # alias make2='make $1 SSH_HOST=isucon11-qualify-2 SSH_BENCH_HOST=isucon11-qualify-2'
 # alias make3='make $1 SSH_HOST=isucon11-qualify-3 SSH_BENCH_HOST=isucon11-qualify-3'
-alias make1='make $1 SSH_HOST=isucon12-qualify-1 SSH_BENCH_HOST=isucon12-qualify-1'
-alias make2='make $1 SSH_HOST=isucon12-qualify-2 SSH_BENCH_HOST=isucon12-qualify-2'
-alias make3='make $1 SSH_HOST=isucon12-qualify-3 SSH_BENCH_HOST=isucon12-qualify-3'
+alias make1='make $1 SSH_HOST=isucon14-qualify-1 SSH_BENCH_HOST=isucon14-qualify-1'
+alias make2='make $1 SSH_HOST=isucon14-qualify-2 SSH_BENCH_HOST=isucon14-qualify-2'
+alias make3='make $1 SSH_HOST=isucon14-qualify-3 SSH_BENCH_HOST=isucon14-qualify-3'
+export VOLTA_HOME="$HOME/.volta"
+export PATH="$VOLTA_HOME/bin:$PATH"
+
+# The next line updates PATH for the Google Cloud SDK.
+# if [ -f '/Users/tannaka/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/tannaka/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+# if [ -f '/Users/tannaka/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/tannaka/Downloads/google-cloud-sdk/completion.zsh.inc'; fi

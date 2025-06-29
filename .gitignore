@@ -27,3 +27,4 @@ emacs/old
 emacs/network-security.data
 git/.gitconfig.local
 git/.gitignore_global
+.zsh_sessions
