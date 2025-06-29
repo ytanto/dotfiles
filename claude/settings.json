@@ -1,0 +1,47 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(find:*)",
+
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+
+      "Bash(lsof:*)",
+      "Bash(time:*)",
+
+      "Bash(npm install:*)",
+      "Bash(npm start)",
+      "Bash(npm test)",
+      "Bash(npm run lint)",
+      "Bash(npm run test:*)",
+
+      "Bash(yarn:*)",
+      "Bash(yarn lint)",
+      "Bash(yarn list:*)",
+      "Bash(yarn outdated)",
+
+      "Bash(npx jest:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(npx expo install:*)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(rm:*)",
+      "Bash(rm -rf:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Read(.env.*)",
+      "Read(id_rsa)",
+      "Read(id_ed25519)",
+      "Read(**/*token*)",
+      "Read(**/*key*)",
+      "Write(.env*)",
+      "Write(**/secrets/**)",
+      "Bash(psql:*)",
+      "Bash(mysql:*)"
+    ]
+  }
+}
