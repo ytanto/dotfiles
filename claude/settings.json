@@ -5,24 +5,19 @@
       "Bash(cat:*)",
       "Bash(mkdir:*)",
       "Bash(find:*)",
-
       "Bash(grep:*)",
       "Bash(rg:*)",
-
       "Bash(lsof:*)",
       "Bash(time:*)",
-
       "Bash(npm install:*)",
       "Bash(npm start)",
       "Bash(npm test)",
       "Bash(npm run lint)",
       "Bash(npm run test:*)",
-
       "Bash(yarn:*)",
       "Bash(yarn lint)",
       "Bash(yarn list:*)",
       "Bash(yarn outdated)",
-
       "Bash(npx jest:*)",
       "Bash(npx vitest run:*)",
       "Bash(npx expo install:*)"
@@ -41,5 +36,6 @@
       "Bash(psql:*)",
       "Bash(mysql:*)"
     ]
-  }
+  },
+  "model": "sonnet"
 }
