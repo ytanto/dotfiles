@@ -169,8 +169,11 @@ export VOLTA_HOME="$HOME/.volta"
 export PATH="$VOLTA_HOME/bin:$PATH"
 export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
 
+if [ -f /opt/homebrew/opt/asdf/libexec/asdf.sh ]; then
+  # Load asdf if it exists
+  . /opt/homebrew/opt/asdf/libexec/asdf.sh
+fi
 
-. /opt/homebrew/opt/asdf/libexec/asdf.sh
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/tannaka/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/tannaka/Downloads/google-cloud-sdk/path.zsh.inc'; fi
