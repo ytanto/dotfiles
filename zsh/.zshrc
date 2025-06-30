@@ -192,3 +192,4 @@ export PATH="$PATH":"$HOME/fvm/default/bin"
 # Volta
 export VOLTA_FEATURE_PNPM=1
 
+export PATH=$PATH:$HOME/.maestro/bin

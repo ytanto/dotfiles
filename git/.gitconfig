@@ -1,7 +1,7 @@
 [include]
     path = ~/dotfiles/git/.gitconfig.local
 [core]
-    excludesfile = ~/.gitignore_global
+	excludesfile = ~/dotfiles/git/.gitignore_global
   	whitespace = cr-at-eol
 [alias]
     s = status

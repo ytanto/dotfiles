@@ -25,12 +25,13 @@
 
       "Bash(npx jest:*)",
       "Bash(npx vitest run:*)",
-      "Bash(npx expo install:*)"
+      "Bash(npx expo install:*)",
+
+      "Bash(gh issue view:*)",
+      "Bash(docker-compose run:*)"
     ],
     "deny": [
       "Bash(sudo:*)",
-      "Bash(rm:*)",
-      "Bash(rm -rf:*)",
       "Bash(curl:*)",
       "Bash(wget:*)",
       "Read(.env.*)",
