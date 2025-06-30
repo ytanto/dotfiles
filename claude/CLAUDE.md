@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-このファイルは、このリポジトリでコードを扱う際のClaude Code (claude.ai/code) への指針を提供します。
+このファイルは、コードを扱う際のClaude Code (claude.ai/code) への指針を提供します。
 
 ## ガイドライン
 
