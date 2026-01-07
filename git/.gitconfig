@@ -38,3 +38,5 @@
 [user]
 	name = Yuto Tannaka
 	email = y.hkh.185@gmail.com
+[push]
+	autoSetupRemote = true

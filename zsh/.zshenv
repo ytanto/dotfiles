@@ -28,7 +28,7 @@ export PATH=$GOPATH/bin:$PATH
 export PATH=$HOME/.nodebrew/current/bin:$PATH
 
 # settings for less
-export LESSHISTFILE=- 
+export LESSHISTFILE=-
 
 # settings for npmbrew
 export PATH=$HOME/.npmbrew/current/bin:$PATH
@@ -58,8 +58,9 @@ case ${OSTYPE} in
 esac
 
 # settings for Android Studio
-export ANDROID_SDK=$HOME/Library/Android/sdk
-export PATH=$HOME/Library/Android/sdk/platform-tools:$PATH
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/platform-tools
 
 # settings for Genymotion
 export PATH=/Applications/Genymotion.app/Contents/MacOS/tools:$PATH
@@ -81,3 +82,7 @@ export PATH=$PATH:/opt/homebrew/bin
 
 # psql
 export PATH=/opt/homebrew/opt/libpq/bin:$PATH
+. "$HOME/.cargo/env"
+
+# For Android build
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
