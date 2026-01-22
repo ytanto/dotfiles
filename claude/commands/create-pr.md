@@ -33,6 +33,9 @@ description: "Push a Pull Request Draft (Branch Optional)"
 6. **PR本文の作成**
    - テンプレートに従ってPR本文を作成
    - Issue番号がある場合は関連Issueとして記載
+   - 変更内容にコードベースの細かな記載は不要
+      - APIを追加・変更した場合：対象APIと変更点を明記
+      - 機能を追加・変更した場合：追加・変更した機能仕様を明記
 
 7. **PR作成と確認**
    - `gh pr create --assignee @me --base {ベースブランチ}` で作成
