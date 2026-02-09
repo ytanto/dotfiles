@@ -1,6 +1,6 @@
 ---
 allowed-tools: Bash(gh:*), Read(.github/*)
-description: "Push a Pull Request Draft (Branch Optional)"
+description: "Push a Pull Request (Branch Optional)"
 ---
 
 使用例：
@@ -44,3 +44,4 @@ description: "Push a Pull Request Draft (Branch Optional)"
 **補足**
 
 - リモートリポジトリにプッシュ済みの前提で進めて良い
+- 指示がない場合はDraftにする必要はない
