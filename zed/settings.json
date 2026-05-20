@@ -44,6 +44,15 @@
   "session": {
     "trust_all_worktrees": true,
   },
+  "title_bar": {
+    "show_sign_in": false,
+  },
+  "toolbar": {
+    "breadcrumbs": false,
+    "quick_actions": false,
+    "selections_menu": false,
+    "agent_review": false,
+  },
   "tabs": {
     "file_icons": true,
     "git_status": true,
