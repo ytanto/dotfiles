@@ -1,0 +1,84 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "ui_font_weight": 400.0,
+  "project_panel": {
+    "dock": "left",
+    "folder_icons": false,
+  },
+  "outline_panel": {
+    "dock": "left",
+  },
+  "collaboration_panel": {
+    "dock": "left",
+  },
+  "agent": {
+    "dock": "right",
+    "favorite_models": [],
+    "model_parameters": [],
+  },
+  "git_panel": {
+    "dock": "left",
+  },
+  "cursor_shape": "block",
+  "cursor_blink": false,
+  "terminal": {
+    "dock": "right",
+    "cursor_shape": "block",
+    "font_family": "Ricty Diminished Discord",
+    "toolbar": {
+      "breadcrumbs": false,
+    },
+  },
+  "icon_theme": {
+    "mode": "dark",
+    "light": "Material Icon Theme",
+    "dark": "Material Icon Theme"
+  },
+  "session": {
+    "trust_all_worktrees": true,
+  },
+  "tabs": {
+    "file_icons": true,
+    "git_status": true,
+  },
+  "ui_font_size": 24.0,
+  "buffer_font_family": "Ricty Diminished Discord",
+  "buffer_font_size": 15,
+  "theme": {
+    "mode": "dark",
+    "light": "One Light",
+    "dark": "Allure"
+  },
+  "format_on_save": "on",
+  "indent_guides": {
+    "enabled": false,
+  },
+  "minimap": {
+    "show": "never",
+  },
+  "languages": {
+    "JSON": {
+      "tab_size": 2,
+      "formatter": "prettier",
+    },
+    "JavaScript": {
+      "formatter": "prettier",
+    },
+    "TypeScript": {
+      "formatter": "prettier",
+    },
+    "TSX": {
+      "formatter": "prettier",
+    },
+    "Markdown": {
+      "format_on_save": "off",
+    },
+  },
+}
