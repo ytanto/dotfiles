@@ -8,7 +8,7 @@
       "appearance": "dark",
       "style": {
         "background": "#32373d",
-        "border": "#606a75",
+        "border": "#606a752",
         "border.variant": "#495059",
         "border.focused": "#5da892",
         "border.selected": "#5da892",
@@ -27,8 +27,8 @@
         "ghost_element.active": "#545d67",
         "ghost_element.selected": "#6b7785",
         "ghost_element.disabled": "#3d444b",
-        "text": "#c0ccdb",
-        "text.muted": "#86909c",
+        "text": "#ffffff",
+        "text.muted": "#d0d9e4",
         "text.placeholder": "#5b646f",
         "text.disabled": "#788390",
         "text.accent": "#5da892",
@@ -133,14 +133,46 @@
         "warning.background": "#f7b83d1a",
         "warning.border": "#f7b83d",
         "players": [
-          { "cursor": "#ffffff", "background": "#5da892", "selection": "#5da89255" },
-          { "cursor": "#e4d294", "background": "#e4d294", "selection": "#e4d29455" },
-          { "cursor": "#9d37fc", "background": "#9d37fc", "selection": "#9d37fc55" },
-          { "cursor": "#a7da1e", "background": "#a7da1e", "selection": "#a7da1e55" },
-          { "cursor": "#f7b83d", "background": "#f7b83d", "selection": "#f7b83d55" },
-          { "cursor": "#e61f44", "background": "#e61f44", "selection": "#e61f4455" },
-          { "cursor": "#f03e5f", "background": "#f03e5f", "selection": "#f03e5f55" },
-          { "cursor": "#9fccbf", "background": "#9fccbf", "selection": "#9fccbf55" }
+          {
+            "cursor": "#ffffff",
+            "background": "#5da892",
+            "selection": "#5da89255"
+          },
+          {
+            "cursor": "#e4d294",
+            "background": "#e4d294",
+            "selection": "#e4d29455"
+          },
+          {
+            "cursor": "#9d37fc",
+            "background": "#9d37fc",
+            "selection": "#9d37fc55"
+          },
+          {
+            "cursor": "#a7da1e",
+            "background": "#a7da1e",
+            "selection": "#a7da1e55"
+          },
+          {
+            "cursor": "#f7b83d",
+            "background": "#f7b83d",
+            "selection": "#f7b83d55"
+          },
+          {
+            "cursor": "#e61f44",
+            "background": "#e61f44",
+            "selection": "#e61f4455"
+          },
+          {
+            "cursor": "#f03e5f",
+            "background": "#f03e5f",
+            "selection": "#f03e5f55"
+          },
+          {
+            "cursor": "#9fccbf",
+            "background": "#9fccbf",
+            "selection": "#9fccbf55"
+          }
         ],
         "syntax": {
           "comment": { "color": "#76818e", "font_style": "italic" },
@@ -154,7 +186,7 @@
           "boolean": { "color": "#e4d294" },
           "constant": { "color": "#e4d294" },
           "keyword": { "color": "#5da892" },
-          "operator": { "color": "#c0ccdb" },
+          "operator": { "color": "#5da892" },
           "punctuation": { "color": "#c0ccdb" },
           "punctuation.bracket": { "color": "#c0ccdb" },
           "punctuation.delimiter": { "color": "#c0ccdb" },
@@ -175,6 +207,10 @@
           "property": { "color": "#c0ccdb" },
           "tag": { "color": "#5da892" },
           "attribute": { "color": "#e4d294" },
+          "selector": { "color": "#e4d294" },
+          "selector.class": { "color": "#e4d294" },
+          "selector.id": { "color": "#e4d294" },
+          "selector.pseudo": { "color": "#e4d294" },
           "label": { "color": "#5da892" },
           "preproc": { "color": "#5da892" },
           "constructor": { "color": "#e4d294" },
