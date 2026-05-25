@@ -1,7 +1,8 @@
 {
   "env": {
     "MAX_MCP_OUTPUT_TOKENS": "50000",
-    "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "1"
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "DISABLE_AUTOUPDATER": "1"
   },
   "permissions": {
     "allow": [
@@ -32,11 +33,14 @@
       "Bash(git diff *)",
       "Bash(gh pr create *)",
       "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
       "Bash(gh pr diff *)",
       "Bash(gh api *)",
       "Bash(gh api graphql *)",
       "Bash(gh pr checks *)",
       "Bash(gh run view *)",
+      "Bash(gh issue create *)",
+      "Bash(gh issue *)",
       "Bash(/usr/bin/make *)",
       "Bash(TARGET=app/ *)",
       "Bash(npx tsc*)",
@@ -80,6 +84,9 @@
       "mcp__plugin_figma_figma__get_design_context",
       "mcp__plugin_figma_figma__get_screenshot",
       "mcp__plugin_figma_figma__:*",
+      "mcp__plugin_figma_figma__*",
+      "mcp__plugin_figma_figma__search_design_system",
+      "mcp__plugin_figma_figma__use_figma",
       "mcp__plugin_playwright_playwright__browser_navigate",
       "mcp__plugin_playwright_playwright__browser_wait_for",
       "mcp__plugin_playwright_playwright__browser_snapshot",
@@ -91,14 +98,14 @@
       "Bash(playwright-cli:*)",
       "Bash(agent-browser *)",
       "Bash(agent-browser open:*)",
-      "Bash(agent-browser snapshot:*)"
+      "Bash(agent-browser snapshot:*)",
+      "mcp__context7__*"
     ],
     "deny": [
       "Bash(sudo:*)",
       "Read(.env.*)",
       "Read(id_rsa)",
       "Read(id_ed25519)",
-      "Read(**/*token*)",
       "Read(**/*private*key*)",
       "Read(**/*secret*key*)",
       "Read(**/*.key)",
@@ -111,9 +118,9 @@
     ],
     "ask": [
       "Bash(git push *)"
-    ]
+    ],
+    "defaultMode": "auto"
   },
-  "model": "opus",
   "statusLine": {
     "type": "command",
     "command": "npx -y ccstatusline@latest",
@@ -125,8 +132,13 @@
     "upgrading-expo@expo-plugins": true,
     "expo-deployment@expo-plugins": true,
     "code-simplifier@claude-plugins-official": true,
-    "playwright-cli@playwright-cli": true
+    "playwright-cli@playwright-cli": true,
+    "ruby-lsp@claude-plugins-official": true
   },
   "language": "japanese",
-  "effortLevel": "low"
+  "effortLevel": "medium",
+  "skipDangerousModePermissionPrompt": true,
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true,
+  "autoUpdates": false
 }
