@@ -165,8 +165,6 @@ alias m=multipass
 alias make1='make $1 SSH_HOST=isucon12-qualify-1 SSH_BENCH_HOST=isucon12-qualify-1'
 alias make2='make $1 SSH_HOST=isucon12-qualify-2 SSH_BENCH_HOST=isucon12-qualify-2'
 alias make3='make $1 SSH_HOST=isucon12-qualify-3 SSH_BENCH_HOST=isucon12-qualify-3'
-export VOLTA_HOME="$HOME/.volta"
-export PATH="$VOLTA_HOME/bin:$PATH"
 export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
 
 if [ -f /opt/homebrew/opt/asdf/libexec/asdf.sh ]; then
@@ -192,7 +190,9 @@ export PATH="$PATH":"$HOME/fvm/default/bin"
 # export FLUTTER_ROOT=$HOME/fvm/default/bin
 
 
-# Volta
-export VOLTA_FEATURE_PNPM=1
-
 export PATH=$PATH:$HOME/.maestro/bin
+
+export DISABLE_AUTOUPDATER=1
+
+# mise
+eval "$(mise activate zsh)"
