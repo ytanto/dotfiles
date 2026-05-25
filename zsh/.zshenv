@@ -86,3 +86,6 @@ export PATH=/opt/homebrew/opt/libpq/bin:$PATH
 
 # For Android build
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
+
+# Local-only overrides (not tracked)
+[ -f "$HOME/.zshenv.local" ] && source "$HOME/.zshenv.local"
