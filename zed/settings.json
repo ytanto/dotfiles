@@ -72,6 +72,7 @@
   "minimap": {
     "show": "never",
   },
+  "cli_default_open_behavior": "new_window",
   "languages": {
     "JSON": {
       "tab_size": 2,
