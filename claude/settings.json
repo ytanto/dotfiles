@@ -100,6 +100,7 @@
     ],
     "defaultMode": "auto"
   },
+  "model": "claude-opus-4-8",
   "statusLine": {
     "type": "command",
     "command": "npx -y ccstatusline@latest",
@@ -114,13 +115,21 @@
     "ruby-lsp@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
-    "figma@claude-plugins-official": true
+    "figma@claude-plugins-official": true,
+    "crosslog@crosslog-plugins": true
+  },
+  "extraKnownMarketplaces": {
+    "crosslog-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "crossloglife/claude-plugins"
+      }
+    }
   },
   "language": "japanese",
   "effortLevel": "medium",
   "skipDangerousModePermissionPrompt": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
-  "autoUpdates": false,
-  "model": "claude-opus-4-8"
+  "autoUpdates": false
 }
