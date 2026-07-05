@@ -71,10 +71,12 @@
       "Bash(psql:*)",
       "Bash(mysql:*)"
     ],
-    "ask": ["Bash(git push *)"],
+    "ask": [
+      "Bash(git push *)"
+    ],
     "defaultMode": "auto"
   },
-  "model": "claude-opus-4-8",
+  "model": "opus[1m]",
   "statusLine": {
     "type": "command",
     "command": "npx -y ccstatusline@latest",
