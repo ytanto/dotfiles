@@ -47,4 +47,8 @@ $ ln -s dotfiles/vim/.vimrc ~/.vimrc
 
 ## Git
 $ ln -s dotfiles/git/.gitconfig ~/.gitconfig
+
+## herdr (https://herdr.dev)
+$ mkdir -p ~/.config/herdr
+$ ln -s ~/dotfiles/herdr/config.toml ~/.config/herdr/config.toml
 ```
