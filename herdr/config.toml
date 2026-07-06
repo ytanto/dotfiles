@@ -75,8 +75,10 @@ prefix = "ctrl+x"
 # remove_worktree = ""  # optional, unset by default; opens confirmation
 # rename_workspace = "prefix+shift+w"
 # close_workspace = "prefix+shift+d"
-# previous_workspace = "" # optional, unset by default
-# next_workspace = ""     # optional, unset by default
+# u=up / d=down の連想でスペースを上下に切り替える
+# （矢印キーは prefix モードで受け付けないため文字キーを使う）
+previous_workspace = "prefix+u"
+next_workspace = "prefix+d"
 # previous_agent = ""     # optional, unset by default
 # next_agent = ""         # optional, unset by default
 # focus_agent = ""        # optional indexed binding, e.g. "prefix+alt+1..9"

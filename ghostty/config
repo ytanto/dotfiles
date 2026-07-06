@@ -85,6 +85,10 @@ keybind = cmd+shift+]=text:\x18j
 keybind = ctrl+tab=text:\x18n
 keybind = ctrl+shift+tab=text:\x18p
 
+# スペース（workspace）切替（herdr 側は prefix+u / prefix+d）
+keybind = cmd+arrow_up=text:\x18u
+keybind = cmd+arrow_down=text:\x18d
+
 # 分割 / 閉じる
 keybind = cmd+d=text:\x18v
 keybind = cmd+shift+d=text:\x18-
