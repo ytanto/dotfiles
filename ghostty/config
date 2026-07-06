@@ -64,3 +64,28 @@ shell-integration-features = no-cursor
 clipboard-read = allow
 clipboard-write = allow
 #keybind = global:ctrl+space=toggle_quick_terminal
+
+# herdr 連携
+# ==========
+# Cmd 系ショートカットを herdr の prefix シーケンス (ctrl+x = \x18) に
+# 変換して送る。macOS では Cmd キーが端末エミュレータ止まりで PTY 内の
+# herdr に届かないため、Ghostty 側で prefix+キー のバイト列へ写像する。
+# ブラケットは物理キー名だと配列差でマッチしないため、押下文字リテラルで指定。
+keybind = cmd+t=text:\x18c
+
+# ペイン移動（[ ] 左右、shift 付きで上下）
+keybind = cmd+[=text:\x18h
+keybind = cmd+]=text:\x18l
+keybind = cmd+shift+[=text:\x18k
+keybind = cmd+shift+]=text:\x18j
+
+# タブ切替
+# Cmd+数字や Cmd+Shift+[ ] は macOS がメニューショートカットとして先に
+# 処理するため keybind で奪えない。メニューに取られない Ctrl 系を使う。
+keybind = ctrl+tab=text:\x18n
+keybind = ctrl+shift+tab=text:\x18p
+
+# 分割 / 閉じる
+keybind = cmd+d=text:\x18v
+keybind = cmd+shift+d=text:\x18-
+keybind = cmd+w=text:\x18x
