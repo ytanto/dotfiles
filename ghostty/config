@@ -89,6 +89,10 @@ keybind = ctrl+shift+tab=text:\x18p
 keybind = cmd+arrow_up=text:\x18u
 keybind = cmd+arrow_down=text:\x18d
 
+# エージェント行フォーカス切替（herdr 側は prefix+i / prefix+m）
+keybind = cmd+shift+arrow_up=text:\x18i
+keybind = cmd+shift+arrow_down=text:\x18m
+
 # 分割 / 閉じる
 keybind = cmd+d=text:\x18v
 keybind = cmd+shift+d=text:\x18-
