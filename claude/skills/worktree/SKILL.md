@@ -8,8 +8,10 @@ CrossLog のリポジトリ群（crosslog-front / crosslog-back / webapp / baas-
 ## 基本方針
 
 - **Claude Code のネイティブ機能を使う**（`claude --worktree <名前>` / EnterWorktree / `.worktreeinclude`）。外部の worktree マネージャや自作スクリプトは使わない
-- worktree の作成先は Claude Code デフォルトの `.claude/worktrees/<名前>/` のままで良い。`.git/info/exclude` に `**/.claude/worktrees/` が自動登録されるため gitignore の追加は不須（チーム展開するときだけ `.gitignore` に追加）
+- worktree の作成先は Claude Code デフォルトの `.claude/worktrees/<名前>/` のままで良い。`.git/info/exclude` に `**/.claude/worktrees/` が自動登録されるため gitignore の追加は不要（チーム展開するときだけ `.gitignore` に追加）
 - 1タスク = 1 worktree = 1ブランチ。同一ブランチは2つの worktree に同時チェックアウトできない
+- Claude Code が作る worktree はデフォルトで `origin/HEAD`（リモートのデフォルトブランチ）起点。ローカルの HEAD 起点にしたい場合は settings.json に `"worktree": { "baseRef": "head" }`。PR レビュー用の worktree は `claude --worktree "#<PR番号>"` で切れる
+- ブランチ・コミット・stash は全 worktree で共有。コミット済みの diff はどの checkout からでも見える。一方、worktree がチェックアウト中のブランチは他所から削除・rebase できず、stash は共有リストに積まれるため並行作業中は取り違えに注意
 - フルクローンの複製（`-2` サフィックスのリポジトリ）と worktree の併用は許容する。無理に一本化しない
 
 ## worktree 作成後のセットアップ
@@ -24,6 +26,10 @@ worktree は tracked ファイルしか持ってこない。作成後に必要�
 
 - mise 管理のリポジトリ（front / webapp）は worktree 初回に `mise trust` が必要な場合がある
 - `.env` 等の git 管理外ファイルはリポジトリルートの `.worktreeinclude`（.gitignore 構文）に列挙すると worktree 作成時に自動コピーされる
+  - コピー対象は「パターンに一致し、かつ gitignore 済み」のファイルのみ（tracked ファイルは対象外）。追記したら `git check-ignore <path>` で対象になっているか確認する
+  - `WorktreeCreate` フックを使う場合 `.worktreeinclude` は処理されないので、ファイルコピーもフック内で行う
+- 共通の permissions は tracked の `.claude/settings.json` に寄せる。`settings.local.json` は worktree ごとに独立なので、そこに書いた許可は worktree では効かず再承認が発生する
+- webapp で worktree を多用するなら、pnpm の Global Virtual Store（pnpm 公式がマルチエージェント worktree 用途として案内: https://pnpm.io/global-virtual-store ）でさらに省ディスク化できる
 
 ## worktree 内での作業ルール（事故防止）
 
@@ -47,8 +53,10 @@ back系のフル worktree 化（DB・ポート分離）は**やらない**。以
 
 ## 掃除
 
-- 作業が終わったら `git worktree remove <path>`。残骸は `git worktree list` で棚卸しして `git worktree prune`
+- 作業が終わったら `git worktree remove <path>`、マージ済みならローカルブランチも `git branch -d` で削除。残骸は `git worktree list` で棚卸しして `git worktree prune`
 - Claude Code が作った worktree は「未コミット変更・新規コミットが無ければ」セッション終了時に自動削除される。コミットが残っていれば消えない
+- 自分で `git worktree add` した worktree と、`-p`（非対話）実行で作られた worktree は自動掃除の対象外。手動で remove する
+- worktree を消す前に、Fork 等の GUI でそのディレクトリを開いているタブは閉じておく（remove 後にエラー表示になる）
 
 ## 参考
 
