@@ -192,7 +192,5 @@ export PATH="$PATH":"$HOME/fvm/default/bin"
 
 export PATH=$PATH:$HOME/.maestro/bin
 
-export DISABLE_AUTOUPDATER=1
-
 # mise
 eval "$(mise activate zsh)"
