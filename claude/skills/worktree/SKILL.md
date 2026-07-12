@@ -16,15 +16,17 @@ CrossLog のリポジトリ群（crosslog-front / crosslog-back / webapp / baas-
 
 ## worktree 作成後のセットアップ
 
-worktree は tracked ファイルしか持ってこない。作成後に必要な作業：
+worktree は tracked ファイルしか持ってこない。**worktree に進入した直後、以下を確認を取らずに自動実行する**（毎回ユーザーに聞かない）：
+
+1. mise 管理のリポジトリ（front / webapp）は初回に必ず `mise trust` が必要 → 進入直後に `mise trust` を実行する（`mise ERROR ... not trusted` を待たず先回りで実行してよい）
+2. 依存インストールを実行する（下表）。時間がかかっても進捗を報告するだけでよく、実行可否は聞かない
 
 | リポジトリ | セットアップ | 備考 |
 |---|---|---|
 | webapp | `pnpm install` のみ | pnpm は共有ストアからのハードリンクなので高速・省ディスク。husky は prepare で自動再生成。apps/connect の秘匿ファイルは `.worktreeinclude` が自動コピー |
-| crosslog-front | `yarn install` | yarn v1 なので丸ごとコピーで重い（約1.6GB/worktree）。.env は無い |
+| crosslog-front | `yarn install` | yarn v1 なので丸ごとコピーで重い（約1.6GB/worktree）・数分かかる。バックグラウンド実行推奨。.env は無い |
 | back系（crosslog-back / baas-platform / report-back） | 下記「back系の割り切り」参照 | |
 
-- mise 管理のリポジトリ（front / webapp）は worktree 初回に `mise trust` が必要な場合がある
 - `.env` 等の git 管理外ファイルはリポジトリルートの `.worktreeinclude`（.gitignore 構文）に列挙すると worktree 作成時に自動コピーされる
   - コピー対象は「パターンに一致し、かつ gitignore 済み」のファイルのみ（tracked ファイルは対象外）。追記したら `git check-ignore <path>` で対象になっているか確認する
   - `WorktreeCreate` フックを使う場合 `.worktreeinclude` は処理されないので、ファイルコピーもフック内で行う
