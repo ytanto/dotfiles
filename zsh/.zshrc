@@ -122,6 +122,12 @@ function peco-make () {
 zle -N peco-make
 bindkey '^[' peco-make
 
+## git worktree に cd
+function wt() {
+    local dir=$(git worktree list | fzf | awk '{print $1}')
+    [ -n "$dir" ] && cd "$dir"
+}
+
 # source zsh-syntax-highlighting
 if [ -f $ZDOTDIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
   source $ZDOTDIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
