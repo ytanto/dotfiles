@@ -66,8 +66,8 @@
       "Read(**/*.key)",
       "Read(**/*access*key*)",
       "Read(**/*google-service-account-key*)",
-      "Write(.env*)",
-      "Write(**/secrets/**)",
+      "Edit(.env*)",
+      "Edit(**/secrets/**)",
       "Bash(psql:*)",
       "Bash(mysql:*)"
     ],
@@ -86,7 +86,7 @@
     "expo-app-design@expo-plugins": true,
     "upgrading-expo@expo-plugins": true,
     "expo-deployment@expo-plugins": true,
-    "code-simplifier@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": false,
     "playwright-cli@playwright-cli": true,
     "ruby-lsp@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
@@ -103,7 +103,10 @@
     }
   },
   "language": "japanese",
+  "effortLevel": "high",
+  "advisorModel": "fable",
   "skipDangerousModePermissionPrompt": true,
+  "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
   "autoUpdates": true
