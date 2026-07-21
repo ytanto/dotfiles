@@ -38,13 +38,20 @@ git -C <repo> worktree add .claude/worktrees/<slug> -b '<headRefName>' 'origin/<
 
 - **`EnterWorktree` の `name` は使わない**。新規ブランチを切ってしまい、既存のリモートブランチをチェックアウトできない
 - 既に同ブランチの worktree があれば（`git worktree list`）作らず再利用する。同一ブランチは2つの worktree に同時チェックアウトできない
-- **依存インストール（`yarn install` 等）は行わない。** このフローは Read / Grep / `git` / `gh` しか使わず、lint も test も実行しないため不要。`worktree` スキルが進入直後の自動インストールを指示していても、このフローでは省く（数分〜十数分の待ちを丸ごと削れる）
+- **進入直後に `mise trust` を実行する**（mise 管理のリポジトリ = crosslog-front / webapp）。`worktree` スキルの必須セットアップで、読み取り専用フローでも省略しない。実測では、これを飛ばしたまま進んで後続の `git` / `gh` 実行時に `mise ERROR ... not trusted` を踏んだ
+- **依存インストール（`yarn install` 等）は `run_in_background` で走らせる。** レビュー自体は Read / Grep / `git` / `gh` しか使わないので待つ必要はないが、**レビュー結果を受けてユーザーがその worktree で実際に画面を触って確認する**ため、環境は整えておく。バックグラウンドなので③④の待ち時間には乗らない
+  - 完了を待たずに③へ進む。レビュー中に lint / test / dev サーバーを起動することは無いので、インストールの成否がレビューをブロックすることもない
+- `.worktreeinclude` は手動 `git worktree add` では処理されない。読み取り専用フローでは `.env` 等が無くても支障ないので、コピーし直さない
 - 進入以降、**Read / Grep のパスはすべて worktree 配下に切り替える**。進入前の会話に残っている main checkout の絶対パスを使い続けると別ツリーを読む
 - 手動 `git worktree add` した worktree は**セッション終了時に自動削除されない**。⑤の報告で掃除方法を伝える
 
 ## ③ /code-review で所見を出す
 
 `Skill` で `code-review` を PR URL 付きで起動する。出力は `file` / `line` / `summary` / `failure_scenario` の JSON 配列。
+
+- **`code-review` は `disable-model-invocation` のため `Skill` ツールからは起動できない**（`Skill code-review cannot be used with Skill tool` が返る）。ユーザーが `/code-review` と打った時しか動かないので、このフローでは**最初から自前でレビューパネルを組む**
+  - 変更ファイルを観点別に分割し、**独立した Agent を並列起動**する（例: 正しさ / 規約・配置 / テスト網羅 / 周辺への影響）。各エージェントには PR の変更意図と `baseRefName` を渡し、`file` / `line` / `summary` / `failure_scenario` の JSON で返させる
+  - 同名の `review` スキルは GitHub PR 向けだが**散文レビューを返す**ので、④に渡す構造化所見としては使いにくい。使うなら出力形式を明示して上書きする
 
 - ここでは**所見を絞り込まない**。recall 重視で出させ、取捨は④に委ねる
 - **lint / test は実行しない。** 判断はすべてコードを読んで行う
