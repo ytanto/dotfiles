@@ -140,12 +140,6 @@ fi
 
 ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets)
 
-# pyenv
-eval "$(pyenv init -)"
-
-# rbenv
-eval "$(rbenv init -)"
-
 # GCP
 # source "/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
 # source "/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
@@ -189,11 +183,6 @@ if [ -f '/Users/tannaka/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then .
 ## Completion scripts setup. Remove the following line to uninstall
 [[ -f /Users/tannaka/.dart-cli-completion/zsh-config.zsh ]] && . /Users/tannaka/.dart-cli-completion/zsh-config.zsh || true
 ## [/Completion]
-
-# Flutter
-export PATH="$PATH":"$HOME/fvm/default/bin"
-# export FLUTTER_ROOT="/Users/tannaka/fvm/default/bin/flutter"
-# export FLUTTER_ROOT=$HOME/fvm/default/bin
 
 
 export PATH=$PATH:$HOME/.maestro/bin
