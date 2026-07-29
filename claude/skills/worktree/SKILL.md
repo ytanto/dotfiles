@@ -3,7 +3,9 @@ name: worktree
 description: CrossLog 各リポジトリでの git worktree 並行開発の方針と手順。worktree の作成・セットアップ・掃除をするとき、「worktree で作業して」「並行で進めて」等で起動する。worktree 運用の相談を受けたときもこれを参照する。
 ---
 
-CrossLog のリポジトリ群（crosslog-front / crosslog-back / webapp / baas-platform / report-back）で git worktree を使った並行開発をするときの方針。
+CrossLog のリポジトリ群で git worktree を使った並行開発をするときの方針。
+
+**worktree を作るのは webapp / crosslog-front だけ。** back系（Docker 依存）は worktree にしない → 「back系の割り切り」参照。
 
 ## 基本方針
 
@@ -27,7 +29,7 @@ worktree は tracked ファイルしか持ってこない。**worktree に進入
 |---|---|---|
 | webapp | `pnpm install` のみ | pnpm は共有ストアからのハードリンクなので高速・省ディスク。husky は prepare で自動再生成。apps/connect の秘匿ファイルは `.worktreeinclude` が自動コピー |
 | crosslog-front | `yarn install` | yarn v1 なので丸ごとコピーで重い（約1.6GB/worktree）・数分かかる。バックグラウンド実行推奨。.env は無い |
-| back系（crosslog-back / baas-platform / report-back） | 下記「back系の割り切り」参照 | |
+| back系（crosslog-back / baas-platform / report-back / customer-support-webapp） | **worktree を作らない**（下記「back系の割り切り」参照） | |
 
 - `.env` 等の git 管理外ファイルはリポジトリルートの `.worktreeinclude`（.gitignore 構文）に列挙すると worktree 作成時に自動コピーされる
   - コピー対象は「パターンに一致し、かつ gitignore 済み」のファイルのみ（tracked ファイルは対象外）。追記したら `git check-ignore <path>` で対象になっているか確認する
@@ -48,12 +50,22 @@ worktree は tracked ファイルしか持ってこない。**worktree に進入
 
 ## back系の割り切り
 
-back系のフル worktree 化（DB・ポート分離）は**やらない**。以下の運用とする：
+**back系（crosslog-back / baas-platform / report-back / customer-support-webapp）は worktree を作らない。** Docker 依存でややこしくなるため、main clone でブランチを切り替えて作業する。「並行で進めて」と言われても、対象が back系なら worktree 化せずその旨を伝える。worktree 可なのは Docker なしで動く **webapp / crosslog-front** だけ。
 
-- dev サーバー・Docker（DB / Redis / Sidekiq）は **main clone でのみ起動**する。worktree からサーバーを起動しない
-- worktree で行うのは、サーバー起動が不要な作業（RSpec の追加・修正、migration を触らないロジック修正、レビュー）に限る
-- 理由: 共有 DB は migration 衝突・schema_migrations 不整合・seed 汚染で事故る。特に crosslog-back は MySQL データが `.docker/volumes/`（リポジトリ内）にあり、worktree ごとの DB 分離はデモデータ投入のやり直しコストが高すぎる
-- 将来、並行でサーバーを立てたい需要が出たら `COMPOSE_PROJECT_NAME` + DB 名の環境変数分離を検討する（コミュニティの確立パターンは存在する）
+理由（実際に踏んだもの）:
+
+- **git 管理外の設定ファイルが来ない**。`config/database.yml` `api_key.yml` 等を手でコピーする羽目になる
+- **コンテナのマウント外になる**。compose の bind mount は main clone を指すため worktree のコードが見えない。サービスディレクトリだけをマウントしている場合（baas-platform は `ruby/services/connect` のみ）は**まったく見えず**、使い捨てコンテナを別途立てることになる
+- **DB を共有しているので結局分離できない**。テスト用に別 MySQL を立てると**メモリを食って既存の DB コンテナが OOM で落ちる**（crosslog-back の DB が実際に2回落ちた）
+- **worktree が消えると main clone が feature ブランチに残る**。Docker が main clone をマウントしているため、気づかないまま**別ブランチのコードで dev サーバーが動く**
+- customer-support-webapp は **crosslog-back の MySQL を共有**しており（`host.docker.internal:5306`）、片方の都合が他方に波及する
+
+運用:
+
+- main clone で `git switch -c <branch>`。並行作業が必要なら worktree ではなく**フルクローンの複製**（`-2` サフィックス）を使う
+- テストは main clone のコンテナでそのまま実行する（`docker compose exec -T <service> bundle exec rspec ...`）
+- 作業後は**元のブランチに戻す**。Docker がそのチェックアウトを見ているため、feature ブランチに置きっぱなしにしない
+- migration は共有 DB を壊しやすい（衝突・schema_migrations 不整合・seed 汚染）。特に crosslog-back は MySQL データが `.docker/volumes/`（リポジトリ内）にあり、作り直しコストが高い
 
 ## 掃除
 
