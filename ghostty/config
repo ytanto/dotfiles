@@ -61,6 +61,7 @@ cursor-style-blink = false
 shell-integration-features = no-cursor
 
 # その他
+mouse-scroll-multiplier = 0.2
 clipboard-read = allow
 clipboard-write = allow
 #keybind = global:ctrl+space=toggle_quick_terminal
