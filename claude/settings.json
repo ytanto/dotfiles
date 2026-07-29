@@ -76,7 +76,6 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
   "statusLine": {
     "type": "command",
     "command": "npx -y ccstatusline@latest",
@@ -92,7 +91,9 @@
     "security-guidance@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "figma@claude-plugins-official": true,
-    "crosslog@crosslog-plugins": true
+    "crosslog@crosslog-plugins": true,
+    "swift-lsp@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "crosslog-plugins": {
@@ -106,9 +107,10 @@
   "effortLevel": "high",
   "advisorModel": "fable",
   "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
+  "remoteControlAtStartup": false,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
-  "autoUpdates": true,
-  "remoteControlAtStartup": false
+  "autoUpdates": true
 }
