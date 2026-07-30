@@ -124,7 +124,11 @@ bindkey '^[' peco-make
 
 ## git worktree に cd
 function wt() {
-    local dir=$(git worktree list | fzf | awk '{print $1}')
+    local dir=$(git worktree list --porcelain | awk '
+        /^worktree /  { path = substr($0, 10) }
+        /^branch /    { sub("refs/heads/", "", $2); print $2 "\t" path }
+        /^detached$/  { print "(detached)\t" path }
+    ' | fzf --with-nth=1 --delimiter='\t' | cut -f2)
     [ -n "$dir" ] && cd "$dir"
 }
 
