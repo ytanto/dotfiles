@@ -68,7 +68,7 @@ async (page) => {
 したがって **ログイン状態は「一度もらった機会を使い切る」前提で計画する**。
 
 - ログアウトを含む項目は**必ず最後の動画の最後**に置く
-- ログアウト後に撮り直しが必要になったら、ユーザーに再ログインを頼むしかない。だから**撮る前にシナリオを固め、撮り直しの芽を潰しておく**（Step 4-9 の余白のような、フレームを見るまで気づけない不具合が該当）
+- ログアウト後に撮り直しが必要になったら、ユーザーに再ログインを頼むしかない。だから**撮る前にシナリオを固め、撮り直しの芽を潰しておく**（Step 4-10 の余白のような、フレームを見るまで気づけない不具合が該当）
 - 認証状態を保存したファイルを作ってしまったら、用が済み次第削除する
 
 ### 尺とタイムアウト
@@ -321,17 +321,34 @@ const smoothCheck = async (loc) => { await scrollTo(loc); await loc.check(); };
 
 ```js
 const cdp = await page.context().newCDPSession(page);
+const { userAgent: realUA } = await cdp.send('Browser.getVersion');   // 上書き前に本来の UA を確保する
 await cdp.send('Network.setUserAgentOverride', {
   userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36',
   platform: 'Linux armv8l',
 });
 // ... モバイル前提の確認 ...
-await cdp.send('Network.setUserAgentOverride', { userAgent: '' });   // 元に戻す
+await cdp.send('Network.setUserAgentOverride', { userAgent: realUA });   // 明示的に戻す
 ```
+
+**`userAgent: ''` では戻らない。`cdp.detach()` でも戻らない。** 上書きはブラウザ側に残り続け、**次のシナリオ・次の撮影まで汚染する**。実際に、UA を戻せていない状態で PC 表示の動画を撮ってしまい（PC 幅なのにアプリ誘導バナーが写り込む）、撮り直しになった。`Browser.getVersion` は override の影響を受けないので、ここから取った値を設定し直すのが唯一確実。
 
 **「出ないから未確認」で片付ける前に、表示条件を実装で確かめる。** 幅なのか UA なのか特定できれば再現できることが多い。
 
-### 4-9. 新規タブは別録画にする。閉じたあとビューポートを再適用する
+### 4-9. 録画を始める前に前提を検証する
+
+前のシナリオが残した状態（UA 上書き、閉じた記録などの localStorage、絞り込み条件、ログイン状態）は、**そのまま次の撮影に持ち込まれる**。スクリプトは自分が設定した前提だけを見て動くので、汚染に気づかず「正しく見える動画」を撮ってしまう。
+
+録画開始前に、そのシナリオが依存する前提をコードで確かめ、違っていたら**撮る前に止める**。
+
+```js
+const pre = await page.evaluate(() => ({ ua: navigator.userAgent, closed: localStorage.getItem('<閉じた記録のキー>') }));
+if (/Mobile|Android|iPhone/.test(pre.ua)) throw new Error(`FAILED: UA が上書きされたまま / ${pre.ua}`);
+if (pre.closed) await page.evaluate(() => localStorage.removeItem('<閉じた記録のキー>'));
+```
+
+止めれば数十秒の損失で済む。撮ってから気づくと、ログアウトを含むシナリオでは**再ログインを頼むところまで巻き戻る**。
+
+### 4-10. 新規タブは別録画にする。閉じたあとビューポートを再適用する
 
 `page.screencast` はその page だけを録る。`target="_blank"` のリンクを踏むと以降が元タブの録画に写らないので、**popup を掴んで別セグメントとして録り、あとで連結する**（同じ `size` で撮れば `concat` でつながる）。
 
@@ -360,7 +377,7 @@ await page.setViewportSize(SIZE);
 ffmpeg -y -ss <秒> -i out.mp4 -frames:v 1 chk.png   # 余白が入っていないか目視
 ```
 
-### 4-10. ダイアログ
+### 4-11. ダイアログ
 
 Playwright はネイティブの `confirm` / `alert` を**デフォルトで自動 dismiss** する。削除確認のようなフローは「キャンセルを押した」扱いで静かに流れるので、扱うなら明示する。
 
@@ -368,7 +385,7 @@ Playwright はネイティブの `confirm` / `alert` を**デフォルトで自�
 page.on('dialog', d => d.accept());
 ```
 
-### 4-11. 注釈で補う
+### 4-12. 注釈で補う
 
 `showActions()` に加えて、任意の説明を重ねられる。オーバーレイは `pointer-events: none` なので操作を妨げない。
 
@@ -387,7 +404,7 @@ await page.screencast.showOverlay(
 );
 ```
 
-### 4-12. 途中でスクリーンショットを挟まない
+### 4-13. 途中でスクリーンショットを挟まない
 
 動画に写り込む上に往復も増える。戻り値（`passed` 配列）で足りることがほとんど。確認したいなら録画前に予行として通す。
 
@@ -395,11 +412,16 @@ await page.screencast.showOverlay(
 
 録画の出力は VP8 の `.webm`（実測で 25fps CFR。公式はフレームレートを規定していないので版が変われば変わり得る）。**webm は中間ファイルとして扱い、納品するのは mp4 だけにする。** webm は QuickTime で開けず、二重に置くと取り違えるため、変換したら残さない。
 
+**`~/Downloads/` に置き、ファイル名に撮影時刻を入れる。** 撮り直しても名前が同じだと、ユーザー側から見て更新されたのか分からない（Finder の更新日時を確認させることになる）。
+
 ```bash
+TS=$(date +%Y%m%d-%H%M)
 ffmpeg -y -i <出力>/evidence.webm \
   -c:v libx264 -preset slow -crf 22 -pix_fmt yuv420p -movflags +faststart \
-  ~/Downloads/<pr番号>-<内容>-<日付>.mp4
+  ~/Downloads/pr<番号>-<連番>-<内容>-$TS.mp4
 ```
+
+撮り直したら**古いファイルは消す**（PR に貼る際に取り違える）。PR 本文のプレースホルダにも新しいファイル名を書き直す。
 
 **納品前に必ず中身を目視確認する。**
 
@@ -455,9 +477,9 @@ ffmpeg -y -i ~/Downloads/<name>.mp4 \
 | 検証が不安定・たまに落ちる | 即時判定でレースしている | `waitFor` で合流する（Step 4-3） |
 | 遷移を待ったつもりが待てていない | Turbo は `load` を再発火しない | `waitForURL` か結果の DOM を待つ（Step 4-4） |
 | 章の冒頭の操作が動画に写らない | `showChapter` の duration より短く待って次に進んだ | duration と待ちを一致させる。そもそも後ろに待ちは不要 |
-| 削除確認などが素通りする | ネイティブダイアログが自動 dismiss される | `page.on('dialog', ...)`（Step 4-8） |
-| 新規タブを開くと以降が撮れない | `page.screencast` はその page だけを録る | popup を別セグメントで録って連結する（Step 4-9） |
-| 画面が縮んで右下にグレー余白が入る | 新規タブを開閉したあと元ページの録画サーフェスが縮んだまま残る | 録画開始前にビューポートを再適用する（Step 4-9）。`innerWidth` では検出できないのでフレームで確認する |
+| 削除確認などが素通りする | ネイティブダイアログが自動 dismiss される | `page.on('dialog', ...)`（Step 4-11） |
+| 新規タブを開くと以降が撮れない | `page.screencast` はその page だけを録る | popup を別セグメントで録って連結する（Step 4-10） |
+| 画面が縮んで右下にグレー余白が入る | 新規タブを開閉したあと元ページの録画サーフェスが縮んだまま残る | 録画開始前にビューポートを再適用する（Step 4-10）。`innerWidth` では検出できないのでフレームで確認する |
 | 録画したまま途中で切られた | 単一 tool 呼び出しが MCP のタイムアウトを超えた | シナリオを分割する（Step 0） |
 | サインイン画面に飛ぶ | Playwright は独立インスタンスで認証が別 | Step 0。保存した `storageState` の書き戻しでは戻らない（Firebase 等は IndexedDB 側にセッションがある） |
 | QuickTime で開けない | 出力が webm | mp4 に変換して添える（Step 5） |
