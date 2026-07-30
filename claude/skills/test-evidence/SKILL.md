@@ -22,6 +22,59 @@ PR に書かれたテスト項目を自分で実施し、その様子を動画�
 
 ---
 
+## Step 0: 環境が整っているか確認する（最初にやる）
+
+**揃っていないまま進めると、撮影の途中で止まるか、間違った画面を撮る。** 下記を一度に確認し、欠けているものはユーザーに整え方を示す。**自分で勝手に環境を変えない**（アプリの起動、コンテナの停止、認証情報の入力はいずれもユーザーの領分）。
+
+```bash
+# 対象アプリが起動しているか（URL は対象に合わせる）
+for u in http://localhost:8081 http://localhost:4100; do
+  printf "%-28s " "$u"; curl -s -o /dev/null -w "%{http_code}\n" --max-time 3 "$u" || echo "応答なし"
+done
+# 変換用の ffmpeg（システム側）
+which ffmpeg || echo "ffmpeg なし → brew install ffmpeg"
+# 録画用の ffmpeg（Playwright 内蔵）
+ls -d ~/Library/Caches/ms-playwright/ffmpeg-* 2>/dev/null || echo "録画用 ffmpeg なし → pnpm dlx playwright install ffmpeg"
+```
+
+| 確認 | 欠けていたときの対処 |
+|---|---|
+| **`browser_run_code_unsafe` が使える** | 1 行流して確かめる。RCE 級のため無効化されている環境がある。使えないならこのスキルは成立しないのでユーザーに相談する |
+| **対象アプリが起動している** | 起動コマンドを案内する（自分で起動しない。ポートやブランチの取り違えが起きる） |
+| **録画用 ffmpeg**（Playwright 内蔵） | `pnpm dlx playwright install ffmpeg`。`~/Library/Caches/ms-playwright/` に入るだけでシステムには影響しない。**`dlx` は最新版を取るため、MCP が使う playwright と版が食い違うと期待するディレクトリ名（`ffmpeg-10xx`）がずれる**。その場合はエラーのパスを見て版を合わせる |
+| **変換用 ffmpeg**（システム側） | `brew install ffmpeg` |
+| **認証が通っている** | 後述 |
+| **対象ブランチがチェックアウトされている** | 複数リポジトリにまたがる機能なら**全リポジトリ分**。`git branch --show-current` で確認する |
+| **マイグレーション等が適用済み** | 未適用だと保存時にエラーになる。適用コマンドを案内する |
+
+### 認証の確認
+
+Playwright MCP は独立したブラウザインスタンスなので、**普段使いのブラウザのログイン状態は引き継がれない**。
+
+```js
+async (page) => {
+  await page.goto('<対象URL>', { waitUntil: 'domcontentloaded' });
+  return JSON.stringify({ url: page.url(), title: await page.title() });
+}
+```
+
+開発環境では素通りできることもある。サインイン画面に飛ぶ場合は次の手順を踏む。
+
+1. `page.bringToFront()` で Playwright のウィンドウを前面に出し、ログイン画面を開いておく
+2. **ユーザーにログインしてもらう。** パスワードは自分で入力しない（認証情報を扱うのはこちらの役割ではない）。ユーザーが認証情報を提示して「入力していい」と言った場合も断る
+
+**`storageState` の保存で復元できると考えないこと。** Firebase 認証のような SPA では、実セッションが IndexedDB 側にあり localStorage には短命なトークンしか入らない。書き戻してもログイン画面に落ちる。加えてトークンをファイルに落とすと、扱うたびに認証情報が露出する。
+
+したがって **ログイン状態は「一度もらった機会を使い切る」前提で計画する**。
+
+- ログアウトを含む項目は**必ず最後の動画の最後**に置く
+- ログアウト後に撮り直しが必要になったら、ユーザーに再ログインを頼むしかない。だから**撮る前にシナリオを固め、撮り直しの芽を潰しておく**（Step 4-9 の余白のような、フレームを見るまで気づけない不具合が該当）
+- 認証状態を保存したファイルを作ってしまったら、用が済み次第削除する
+
+### 尺とタイムアウト
+
+長時間の単一呼び出しは MCP 側のタイムアウトに当たることがある。**当たると録画したまま切られる**ので、1 本が長くなるなら分割するか、タイムアウト設定を確認する。
+
 ## Step 1: テスト項目を実装と突き合わせて最新化する
 
 **実施の前に必ずやる。** 項目が実装から遅れていることが多く、そのまま実施すると「通ったが検証できていない」状態になる。
@@ -68,9 +121,22 @@ DevTools で属性を書き換える、API を直接叩く、といった画面�
 
 - **章 = テスト項目の節**。`showChapter('1. 配信先サービスの選択と保存', { description: '...' })`
 - 分けるのは**対象データが変わって前提を作り直すとき**くらい（新機能の確認 → 既存データでのデグレ確認）。それでも 2 本まで
-- 尺の目安は 1 本 90 秒以内。**ただし 1 回の tool 呼び出しが長時間になるとタイムアウトの危険がある**（Step 3-1）
+- 尺の目安は 1 本 90 秒以内。**ただし 1 回の tool 呼び出しが長時間になるとタイムアウトの危険がある**（Step 0）
 
 計画とカバー対応表をユーザーに示してから実施に入る。対応表は Step 6 でそのまま使う。
+
+### 複数リポジトリにまたがる機能は、末端の画面でまとめて実施する
+
+1 つの機能が複数の PR に分かれている場合（DB・API・バックエンド・表示 UI など）、**画面を持たない層を個別にテストしない**。ユーザーが実際に見る末端の画面で通しで確認すれば、その経路上の層が動いていることが同時に示せる。
+
+- **実施と動画は末端の PR（表示 UI 側）に置く。** 他の PR は「動作確認は <末端の PR> で実施」と参照させる
+- 参照される側の PR には、**その PR でしか確認できないもの**だけを個別に書く。例:
+  - データ移行（migration）の結果 — SQL で確認するしかない
+  - API 単体の応答（境界値・異常系・フィルタ条件） — 画面まで出てこない分岐
+  - 通信が失敗したときのフォールバック — 末端では再現しづらい
+- **「経路が通った」ことと「その層のロジックが網羅された」ことは別物。** 末端の画面で確認できるのは前者。後者が要る箇所は上記のように個別に残す
+
+前提として、**全リポジトリのブランチが揃っていないと通しで動かない**。実施前に各リポジトリのブランチと、マイグレーション等の適用状態を確認する。
 
 ### 尺を削る（手順は削らない）
 
@@ -78,45 +144,7 @@ DevTools で属性を書き換える、API を直接叩く、といった画面�
 - **入力そのものが検証対象なら `pressSequentially(text, { delay: 60 })`**。打っている過程が見える
 - **同じ確認を 2 回しない**
 
-## Step 3: 準備
-
-### 3-1. 前提ツールを確認する
-
-`browser_run_code_unsafe` は RCE 級のため無効化されている環境がある。1 行流して確認する。使えなければユーザーに相談する（このスキルは成立しない）。
-
-長時間の単一呼び出しは MCP 側のタイムアウトに当たることがある。**当たると録画したまま切られる**ので、1 本が長くなるなら分割するか、タイムアウト設定を確認する。
-
-### 3-2. 録画に必要なバイナリ
-
-Playwright 内蔵の ffmpeg が要る。無いと `screencast.start` が `Executable doesn't exist at .../ffmpeg-*` で落ちる。
-
-```bash
-pnpm dlx playwright install ffmpeg
-```
-
-`~/Library/Caches/ms-playwright/` に入るだけでシステムの ffmpeg には影響しない。**`dlx` は最新版を取るため、MCP が使う playwright と版が食い違うと期待するディレクトリ名（`ffmpeg-10xx`）がずれて解決しないことがある。** その場合はエラーメッセージのパスを見て版を合わせる。
-
-### 3-3. 認証状態を確認する
-
-Playwright MCP は独立したブラウザインスタンスなので、**ログインが必要なアプリでは認証が通っているか先に確かめる**。
-
-```js
-async (page) => {
-  await page.goto('<対象URL>', { waitUntil: 'domcontentloaded' });
-  return JSON.stringify({ url: page.url(), title: await page.title() });
-}
-```
-
-開発環境では素通りできることが多い。サインイン画面に飛ぶ場合は、一度ログインして `storageState` を保存しておけば以降のセッションで使い回せる。
-
-```js
-// ログイン後に実行して認証状態を保存する
-await page.context().storageState({ path: '<repo>/.playwright-mcp/auth.json' });
-```
-
-パスワードの入力が要るなら**自分で入力せずユーザーに依頼する**。認証情報を扱うのはこちらの役割ではない。
-
-### 3-4. テストデータを整える
+## Step 3: テストデータを整える
 
 新規にデータを作るなら `/crosslog:test-seed-data`（crosslog-back / crosslog-front 向け、非破壊）を使う。ここで扱うのは**実施の邪魔になる既存データの見極め**。
 
@@ -205,6 +233,24 @@ await page.waitForFunction(() => document.querySelectorAll('[name="ids[]"]:check
 
 即時判定を使ってよいのは、**`waitFor` で合流した後のスナップショット確認**だけ。
 
+### レイアウトを自分で測るときは隠し要素を除く
+
+行数や位置を `getBoundingClientRect` で測ることがあるが、**UI には測定用・アニメーション用の不可視要素が仕込まれていることがある**。素朴に探すと、それを拾って誤った値を得る。実際に「本文が 3 行までのはずが 5 行」と誤検出し、実装のバグかと疑った（原因は `opacity: 0` の測定用テキストだった）。
+
+```js
+const visible = (e) => {
+  const cs = getComputedStyle(e);
+  if (cs.opacity === '0' || cs.visibility === 'hidden' || cs.display === 'none') return false;
+  return !e.closest('[aria-hidden="true"]');
+};
+// テキストを直接持つ要素を探す（子要素にリンク等が埋まっていても親を拾える）
+const hasOwnText = (e, s) => [...e.childNodes].some(c => c.nodeType === 3 && (c.textContent || '').includes(s));
+```
+
+`children.length === 0` で絞るのも罠。**インラインのリンクが本文の子要素として埋め込まれている場合に本文が見つからなくなる**。上記の `hasOwnText` のようにテキストノードの有無で判断する。
+
+`innerText` も不可視要素を含むことがあるので、「2 回出ている」ように見えても二重描画とは限らない。疑う前に要素ごとの `opacity` / `position` を確認する。
+
 ### 4-4. ページ遷移の待ち方
 
 - **フル遷移**: `page.waitForURL('**/notifications', { timeout: 8000 })`
@@ -269,7 +315,52 @@ const smoothCheck = async (loc) => { await scrollTo(loc); await loc.check(); };
 
 待機に **`setTimeout` は使えない**（サンドボックスに存在しない）。`page.waitForTimeout` を使う。チェックボックスは `click()` ではなく `check()` を通したいので、ヘルパーは分けておく。
 
-### 4-8. ダイアログ
+### 4-8. スマホ表示は「幅を狭める」だけでは足りないことがある
+
+`setViewportSize` で幅を変えても `navigator.userAgent` は変わらない。**UA を見て出し分けている要素（アプリ誘導バナー、ストア誘導、モバイル専用の案内）は出てこない。** CDP で UA を上書きする。
+
+```js
+const cdp = await page.context().newCDPSession(page);
+await cdp.send('Network.setUserAgentOverride', {
+  userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36',
+  platform: 'Linux armv8l',
+});
+// ... モバイル前提の確認 ...
+await cdp.send('Network.setUserAgentOverride', { userAgent: '' });   // 元に戻す
+```
+
+**「出ないから未確認」で片付ける前に、表示条件を実装で確かめる。** 幅なのか UA なのか特定できれば再現できることが多い。
+
+### 4-9. 新規タブは別録画にする。閉じたあとビューポートを再適用する
+
+`page.screencast` はその page だけを録る。`target="_blank"` のリンクを踏むと以降が元タブの録画に写らないので、**popup を掴んで別セグメントとして録り、あとで連結する**（同じ `size` で撮れば `concat` でつながる）。
+
+```js
+const [popup] = await Promise.all([
+  page.context().waitForEvent('page', { timeout: 8000 }),
+  page.getByRole('link', { name: '詳細を見る' }).first().click(),
+]);
+await popup.setViewportSize(SIZE);
+await popup.screencast.start({ path: OUT_B, size: SIZE });
+try { /* 新規タブ側の確認 */ } finally { await popup.screencast.stop(); }
+await popup.close();
+await page.bringToFront();
+
+// ここが必要。popup を開閉すると元ページの録画サーフェスが縮んだまま残り、
+// 以降のフレームが小さく描画されて右下にグレー余白が入る
+await page.setViewportSize({ width: SIZE.width, height: SIZE.height - 1 });
+await page.setViewportSize(SIZE);
+```
+
+**同じ値を再設定しても効かない**（no-op になる）。必ず一度別の値を通す。
+
+この縮小は `window.innerWidth` では検出できない（JS からは元のサイズに見える）ため、**録画したフレームを見るまで気づけない**。新規タブを開閉したシナリオは、納品前にフレームを抜いて確認する。
+
+```bash
+ffmpeg -y -ss <秒> -i out.mp4 -frames:v 1 chk.png   # 余白が入っていないか目視
+```
+
+### 4-10. ダイアログ
 
 Playwright はネイティブの `confirm` / `alert` を**デフォルトで自動 dismiss** する。削除確認のようなフローは「キャンセルを押した」扱いで静かに流れるので、扱うなら明示する。
 
@@ -277,7 +368,7 @@ Playwright はネイティブの `confirm` / `alert` を**デフォルトで自�
 page.on('dialog', d => d.accept());
 ```
 
-### 4-9. 注釈で補う
+### 4-11. 注釈で補う
 
 `showActions()` に加えて、任意の説明を重ねられる。オーバーレイは `pointer-events: none` なので操作を妨げない。
 
@@ -296,13 +387,13 @@ await page.screencast.showOverlay(
 );
 ```
 
-### 4-10. 途中でスクリーンショットを挟まない
+### 4-12. 途中でスクリーンショットを挟まない
 
 動画に写り込む上に往復も増える。戻り値（`passed` 配列）で足りることがほとんど。確認したいなら録画前に予行として通す。
 
 ## Step 5: 納品
 
-出力は VP8 の `.webm`（実測で 25fps CFR。公式はフレームレートを規定していないので版が変われば変わり得る）。GitHub でも Chrome でも再生できるが、QuickTime で開けないので mp4 も添えると親切。
+録画の出力は VP8 の `.webm`（実測で 25fps CFR。公式はフレームレートを規定していないので版が変われば変わり得る）。**webm は中間ファイルとして扱い、納品するのは mp4 だけにする。** webm は QuickTime で開けず、二重に置くと取り違えるため、変換したら残さない。
 
 ```bash
 ffmpeg -y -i <出力>/evidence.webm \
@@ -357,17 +448,18 @@ ffmpeg -y -i ~/Downloads/<name>.mp4 \
 
 | 症状 | 原因 | 対処 |
 |---|---|---|
-| `Executable doesn't exist at .../ffmpeg-*` | 内蔵 ffmpeg 未取得、または版の不一致 | Step 3-2 |
+| `Executable doesn't exist at .../ffmpeg-*` | 内蔵 ffmpeg 未取得、または版の不一致 | Step 0 |
 | `Screencast is already started` | 前回 `stop()` に到達せず終了した | **`finally` で `stop()`**（Step 4-2）。それでも残るなら `browser_close` でブラウザごと作り直す。`page.screencast._started = false` の直叩きは内部実装依存の最終手段 |
 | `File access denied: ... outside allowed roots` | `filename` が許可ルート外 | `<repo>/.playwright-mcp/` に置く（Step 4-1） |
 | `require is not defined` / `URL is not defined` | サンドボックスで標準グローバルが限定的 | `page` と素の JS だけで書く |
 | 検証が不安定・たまに落ちる | 即時判定でレースしている | `waitFor` で合流する（Step 4-3） |
 | 遷移を待ったつもりが待てていない | Turbo は `load` を再発火しない | `waitForURL` か結果の DOM を待つ（Step 4-4） |
 | 章の冒頭の操作が動画に写らない | `showChapter` の duration より短く待って次に進んだ | duration と待ちを一致させる。そもそも後ろに待ちは不要 |
-| 削除確認などが素通りする | ネイティブダイアログが自動 dismiss される | `page.on('dialog', ...)`（Step 4-7） |
-| 新規タブを開くと以降が撮れない | `page.screencast` はその page だけを録る | 同一タブで完結させる。無理なら計画段階でその項目を外す |
-| 録画したまま途中で切られた | 単一 tool 呼び出しが MCP のタイムアウトを超えた | シナリオを分割する（Step 3-1） |
-| サインイン画面に飛ぶ | Playwright は独立インスタンスで認証が別 | Step 3-3 |
+| 削除確認などが素通りする | ネイティブダイアログが自動 dismiss される | `page.on('dialog', ...)`（Step 4-8） |
+| 新規タブを開くと以降が撮れない | `page.screencast` はその page だけを録る | popup を別セグメントで録って連結する（Step 4-9） |
+| 画面が縮んで右下にグレー余白が入る | 新規タブを開閉したあと元ページの録画サーフェスが縮んだまま残る | 録画開始前にビューポートを再適用する（Step 4-9）。`innerWidth` では検出できないのでフレームで確認する |
+| 録画したまま途中で切られた | 単一 tool 呼び出しが MCP のタイムアウトを超えた | シナリオを分割する（Step 0） |
+| サインイン画面に飛ぶ | Playwright は独立インスタンスで認証が別 | Step 0。保存した `storageState` の書き戻しでは戻らない（Firebase 等は IndexedDB 側にセッションがある） |
 | QuickTime で開けない | 出力が webm | mp4 に変換して添える（Step 5） |
 
 ## 付録: ブラウザ以外を録画したい場合
