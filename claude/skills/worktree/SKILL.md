@@ -62,9 +62,56 @@ worktree は tracked ファイルしか持ってこない。**worktree に進入
 - **MySQL を 2 つ立てるとメモリを食う**（crosslog-back の DB が実際に 2 回 OOM で落ちた）
 - customer-support-webapp は **crosslog-back の MySQL を共有**しており（`host.docker.internal:5306`）、片方の都合が他方に波及する
 
-### 手順
+### 二つの方式を使い分ける
 
-1. worktree を作る（`.worktreeinclude` があれば git 管理外の設定ファイルが自動でコピーされる）
+**やりたいことによって方式が変わる。** 既存の開発環境を他の人（他の作業）が使っているなら、後者を選ぶ。
+
+| やりたいこと | 方式 | 既存への影響 |
+|---|---|---|
+| **テストを回す**（TDD 中はこれで足りる） | **別プロジェクトでテスト専用コンテナを立てる** | **なし**。サーバーを起動せず、テスト用データベースしか触らない |
+| **画面から動作確認する** | **別プロジェクトで別ポートにサーバーを立てる** | **なし**。既存のポートを奪わない |
+| 既存とまったく同じ環境で確認する | **override でマウント先を切り替える** | **あり**。他作業がそのサービスを使えなくなる |
+
+override は「そのサービスを占有してよいとき」の手段。**並行作業がある間は別プロジェクト方式のほうが安全**。
+
+### 方式A: 別プロジェクトでテスト・サーバーを立てる（推奨）
+
+DB は既存のものを共有する。**既存のネットワークに参加すれば compose のサービス名（`db` 等）を名前解決できる**ので、`database.yml` を書き換えずに済む。
+
+```yaml
+# docker-compose.worktree.yml（main clone 直下・git 管理外）
+services:
+  test:
+    image: crosslog-back-back        # 既存のイメージをそのまま使う
+    platform: linux/x86_64
+    container_name: crosslog-back-worktree-test
+    tty: true
+    env_file: ./.docker/services/back/.env.development
+    command: sleep infinity          # サーバーは起動しない → ポート衝突なし
+    volumes:
+      - ${WORKTREE_PATH}:/crosslog-back
+      - ~/.ssh/id_rsa:/.ssh/id_rsa
+
+networks:
+  default:
+    name: crosslog-back_default      # 既存のネットワークに参加する
+    external: true
+```
+
+```bash
+WORKTREE_PATH=<worktree の絶対パス> docker compose -p crosslog-back-wt -f docker-compose.worktree.yml up -d
+docker compose -p crosslog-back-wt -f docker-compose.worktree.yml exec test \
+  sh -c 'cd /crosslog-back && RAILS_ENV=test bundle exec rspec <path>'
+```
+
+**画面から確認したくなったら、同じファイルの `command` を `rails s` に変え `ports: ["4001:3000"]` を足すだけ**でサーバー用になる。そのとき参照元（front の `.env`、IDP の `CROSSLOG_BACK_BASE_URL`）を新しいポートに向ける。
+
+- **テストは `crosslog_test` を使うので開発用データベースを汚さない**
+- **開発用データベースにマイグレーションを流さないこと**（既存の作業が壊れる）。流すのは test 側だけにする
+
+### 方式B: override でマウント先を切り替える
+
+1. worktree を作る
 2. **main clone** に `docker-compose.override.yml` を置き、コードのマウント先を worktree の絶対パスに向ける
 3. **main clone のディレクトリで** `docker compose up -d <service>` して反映する
 4. worktree を切り替えるときは override のパスを書き換えて再度 `up -d`
@@ -85,6 +132,7 @@ DB / Redis / PubSub は**触らない**。main clone のものをそのまま共
 
 #### 落とし穴（実際に踏んだもの）
 
+- **`.worktreeinclude` は手動の `git worktree add` では処理されない。** Claude Code の worktree 機能（`EnterWorktree` / `claude --worktree`）が処理する仕組みのため。**手動で作ったら設定ファイルは自分でコピーする**（crosslog-back なら `config/*.yml` の 7 本と `.docker/services/back/.env.development`）
 - **compose ファイル自体は main clone のものが読まれる。** worktree 側の `docker-compose.dev.yml` に環境変数を足しても**起動には反映されない**。同じ設定を **override にも書く**こと（worktree 側はコミット用、override は起動用の二重管理になる）
 - **compose ファイルを編集するときは編集先を間違えやすい。** 「Docker は main clone で動かす」ため main clone のパスを開きたくなるが、**コミットすべき変更は worktree 側**。main clone を編集すると、そこにチェックアウトされている**別作業のブランチを汚す**
   - 汚した場合の復旧: main clone で `git diff -- <file> > /tmp/x.patch` → worktree で `git apply --check` してから `git apply` → main clone を `git checkout -- <file>` で戻す
@@ -127,7 +175,7 @@ worktree の `.git` は `gitdir: .../worktrees/<名前>` を指すファイル�
 
 ### ignore の置き場所
 
-- **`docker-compose.override.yml` → global gitignore**（`~/dotfiles/git/.gitignore_global`）。個人環境の絶対パスを含むため、どのリポジトリでも永久にコミットしない
+- **`docker-compose.override.yml` / `docker-compose.worktree.yml` → global gitignore**（`~/dotfiles/git/.gitignore_global`）。個人環境の絶対パスを含むため、どのリポジトリでも永久にコミットしない
 - **`.worktreeinclude` → リポジトリに tracked が慣習**（webapp が前例）。未コミットで試す間はそのリポジトリの `.git/info/exclude` に入れる
 
 ### 検証状況
