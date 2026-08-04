@@ -83,6 +83,13 @@ services:
 
 DB / Redis / PubSub は**触らない**。main clone のものをそのまま共有する。
 
+#### 落とし穴（実際に踏んだもの）
+
+- **compose ファイル自体は main clone のものが読まれる。** worktree 側の `docker-compose.dev.yml` に環境変数を足しても**起動には反映されない**。同じ設定を **override にも書く**こと（worktree 側はコミット用、override は起動用の二重管理になる）
+- **compose ファイルを編集するときは編集先を間違えやすい。** 「Docker は main clone で動かす」ため main clone のパスを開きたくなるが、**コミットすべき変更は worktree 側**。main clone を編集すると、そこにチェックアウトされている**別作業のブランチを汚す**
+  - 汚した場合の復旧: main clone で `git diff -- <file> > /tmp/x.patch` → worktree で `git apply --check` してから `git apply` → main clone を `git checkout -- <file>` で戻す
+- **zsh の `noclobber` で `>` によるファイル上書きが拒否される**（`file exists:` と出て中身が変わらない）。上書きは Write ツールか `>|` を使う
+
 ### リポジトリ別の事情
 
 | リポジトリ | `.worktreeinclude` | 備考 |
@@ -125,7 +132,9 @@ worktree の `.git` は `gitdir: .../worktrees/<名前>` を指すファイル�
 
 ### 検証状況
 
-- 2026-08-04: crosslog-back に `.worktreeinclude` を設置（`.git/info/exclude` で無視）／global gitignore に override を追加。**override による実起動はまだ検証していない**
+- 2026-08-04: crosslog-back に `.worktreeinclude` を設置（`.git/info/exclude` で無視）／global gitignore に override を追加
+- 2026-08-04: **baas-platform（idp）で override 方式の実起動を確認済み**。コンテナのマウント元が worktree を指し、worktree 側のコードでマイグレーション・モデル・ルーティングが動作した。上記「落とし穴」はこのときに踏んだもの
+- crosslog-back での実起動は未検証（DB データ 6.8GB を共有する構成のため、実際に動かすときに確認する）
 
 ## 掃除
 
