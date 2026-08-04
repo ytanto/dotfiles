@@ -5,7 +5,7 @@ description: CrossLog 各リポジトリでの git worktree 並行開発の方�
 
 CrossLog のリポジトリ群で git worktree を使った並行開発をするときの方針。
 
-**worktree を作るのは webapp / crosslog-front だけ。** back系（Docker 依存）は worktree にしない → 「back系の割り切り」参照。
+**worktree はどのリポジトリでも作れる。** ただし Docker を使う back系は、**worktree 側で `docker compose up` してはいけない**（main clone の Docker にコードをマウントし直す）→ 「back系（Docker あり）の worktree」参照。
 
 ## 基本方針
 
@@ -29,7 +29,7 @@ worktree は tracked ファイルしか持ってこない。**worktree に進入
 |---|---|---|
 | webapp | `pnpm install` のみ | pnpm は共有ストアからのハードリンクなので高速・省ディスク。husky は prepare で自動再生成。apps/connect の秘匿ファイルは `.worktreeinclude` が自動コピー |
 | crosslog-front | `yarn install` | yarn v1 なので丸ごとコピーで重い（約1.6GB/worktree）・数分かかる。バックグラウンド実行推奨。.env は無い |
-| back系（crosslog-back / baas-platform / report-back / customer-support-webapp） | **worktree を作らない**（下記「back系の割り切り」参照） | |
+| back系（crosslog-back / baas-platform / report-back / customer-support-webapp） | 依存インストールは不要（コンテナ内で完結）。代わりに **main clone の `docker-compose.override.yml` でコードのマウント先を worktree に向ける** | 下記「back系（Docker あり）の worktree」参照。**worktree 側で `docker compose up` しない** |
 
 - `.env` 等の git 管理外ファイルはリポジトリルートの `.worktreeinclude`（.gitignore 構文）に列挙すると worktree 作成時に自動コピーされる
   - コピー対象は「パターンに一致し、かつ gitignore 済み」のファイルのみ（tracked ファイルは対象外）。追記したら `git check-ignore <path>` で対象になっているか確認する
@@ -48,24 +48,84 @@ worktree は tracked ファイルしか持ってこない。**worktree に進入
   3. main 側を `git checkout -- <files>` で復元（自分が触っていないファイルを巻き込まない）
 - crosslog-front: jest の `testPathIgnorePatterns` に `/\.claude/` が含まれるため、デフォルトの `.claude/worktrees/` 配下では**全テストが 0 件マッチ**になる。`yarn test:unit <path> --testPathIgnorePatterns=/node_modules/` で上書きして実行する（`yarn check:all` の test ステージは同じ理由で落ちるので、lint / tsc / test を個別に回す）
 
-## back系の割り切り
+## back系（Docker あり）の worktree
 
-**back系（crosslog-back / baas-platform / report-back / customer-support-webapp）は worktree を作らない。** Docker 依存でややこしくなるため、main clone でブランチを切り替えて作業する。「並行で進めて」と言われても、対象が back系なら worktree 化せずその旨を伝える。worktree 可なのは Docker なしで動く **webapp / crosslog-front** だけ。
+**back系でも worktree は使える。ただし Docker は main clone で 1 セットだけ動かし、コードのマウント先を override で worktree に向ける。** worktree ごとに Docker 環境を立てることはしない。
 
-理由（実際に踏んだもの）:
+> 以前は「back系は worktree を作らない」としていたが、**Docker を worktree 側で立てようとするから破綻していた**だけで、コードのマウント先だけ差し替えれば成立する。2026-08-04 に方針変更。
 
-- **git 管理外の設定ファイルが来ない**。`config/database.yml` `api_key.yml` 等を手でコピーする羽目になる
-- **コンテナのマウント外になる**。compose の bind mount は main clone を指すため worktree のコードが見えない。サービスディレクトリだけをマウントしている場合（baas-platform は `ruby/services/connect` のみ）は**まったく見えず**、使い捨てコンテナを別途立てることになる
-- **DB を共有しているので結局分離できない**。テスト用に別 MySQL を立てると**メモリを食って既存の DB コンテナが OOM で落ちる**（crosslog-back の DB が実際に2回落ちた）
-- **worktree が消えると main clone が feature ブランチに残る**。Docker が main clone をマウントしているため、気づかないまま**別ブランチのコードで dev サーバーが動く**
+### なぜこの形なのか（worktree で `docker compose up` してはいけない理由）
+
+- **DB データが巨大**。crosslog-back の `.docker/volumes/db` は **6.8GB**。worktree にコピーする選択肢はない
+- **crosslog-back の compose は `${PWD}` 依存**。`db-volume` の `driver_opts.device` が `${PWD}/.docker/volumes/db` なので、**worktree で up すると空の別 DB が初期化される**（データは gitignore されているため worktree には来ない）
+- **同じデータディレクトリを 2 つの mysqld が開くと壊れる**。device を絶対パスで共有しつつ両方起動する、は不可
+- **MySQL を 2 つ立てるとメモリを食う**（crosslog-back の DB が実際に 2 回 OOM で落ちた）
 - customer-support-webapp は **crosslog-back の MySQL を共有**しており（`host.docker.internal:5306`）、片方の都合が他方に波及する
 
-運用:
+### 手順
 
-- main clone で `git switch -c <branch>`。並行作業が必要なら worktree ではなく**フルクローンの複製**（`-2` サフィックス）を使う
-- テストは main clone のコンテナでそのまま実行する（`docker compose exec -T <service> bundle exec rspec ...`）
-- 作業後は**元のブランチに戻す**。Docker がそのチェックアウトを見ているため、feature ブランチに置きっぱなしにしない
-- migration は共有 DB を壊しやすい（衝突・schema_migrations 不整合・seed 汚染）。特に crosslog-back は MySQL データが `.docker/volumes/`（リポジトリ内）にあり、作り直しコストが高い
+1. worktree を作る（`.worktreeinclude` があれば git 管理外の設定ファイルが自動でコピーされる）
+2. **main clone** に `docker-compose.override.yml` を置き、コードのマウント先を worktree の絶対パスに向ける
+3. **main clone のディレクトリで** `docker compose up -d <service>` して反映する
+4. worktree を切り替えるときは override のパスを書き換えて再度 `up -d`
+
+```yaml
+# crosslog-back/docker-compose.override.yml（main clone 側・git 管理外）
+services:
+  back:
+    volumes:
+      - /Users/<user>/.../crosslog-back/.claude/worktrees/<名前>:/crosslog-back
+      - ~/.ssh/id_rsa:/.ssh/id_rsa
+  sidekiq:
+    volumes:
+      - /Users/<user>/.../crosslog-back/.claude/worktrees/<名前>:/crosslog-back
+```
+
+DB / Redis / PubSub は**触らない**。main clone のものをそのまま共有する。
+
+### リポジトリ別の事情
+
+| リポジトリ | `.worktreeinclude` | 備考 |
+|---|---|---|
+| **crosslog-back** | **必要**。`.docker/services/back/.env.development` と `config/*.yml`（api_key / cable / database / linkage / redis / secrets / storage の 7 本）がすべて gitignore | DB データは 6.8GB。絶対にコピーしない |
+| **baas-platform** | **不要**。`config/database.yml` は tracked で、gitignore は `/**/.env` のみ。IDP 配下に持ち出すべきファイルは実質ない | compose の volume は**固定名の named volume**（`crosslog-baas-idp-mysql-volume-development`）で `${PWD}` 非依存。ただし `container_name` とポートが固定なので**同時起動は不可** |
+
+### 切り替えのルール（重要）
+
+**マウント先の切り替えは、ユーザーの明示的な指示・承認があるときだけ行う。自分の判断で勝手に切り替えない。**
+
+override は 1 ファイルしかないため、切り替えた瞬間に**それまでの worktree は Docker から外れる**。影響が自分の作業範囲を超え、別セッションで作業している人のコンテナを黙って奪うことになる。
+
+```
+worktree A で作業中（Docker は A を見ている）
+  ↓ B に切り替える
+worktree A のセッションで docker compose exec ... rspec を叩くと
+  → B のコードでテストが走る。しかも気づきにくい
+```
+
+**back系のコンテナでコマンドを実行する前に、今どのブランチが載っているか必ず確認する。**
+
+```bash
+docker compose exec -T back git -C /crosslog-back branch --show-current
+```
+
+worktree の `.git` は `gitdir: .../worktrees/<名前>` を指すファイルなので、**コンテナ内から見えるブランチ＝いま Docker が握っているコード**。意図と違えば、切り替えてよいかユーザーに確認してから `up -d` する。
+
+### 制約
+
+- **同時に Docker へ接続できる worktree は 1 つだけ**。並行で 2 つ動かすことはできない
+- main clone のブランチは develop のままでよい（コードはマウントされないため）。**以前あった「main clone が feature ブランチに残る」問題は、この形では起きない**
+- テストは main clone のコンテナでそのまま実行する（`docker compose exec -T <service> bundle exec rspec ...`）。コードは worktree を向いているので、worktree の変更がそのまま走る
+- migration は共有 DB を壊しやすい（衝突・schema_migrations 不整合・seed 汚染）。作り直しコストが高いので、worktree を切り替える前に**当てた migration を戻す**か、戻せない変更なら別途合意を取る
+
+### ignore の置き場所
+
+- **`docker-compose.override.yml` → global gitignore**（`~/dotfiles/git/.gitignore_global`）。個人環境の絶対パスを含むため、どのリポジトリでも永久にコミットしない
+- **`.worktreeinclude` → リポジトリに tracked が慣習**（webapp が前例）。未コミットで試す間はそのリポジトリの `.git/info/exclude` に入れる
+
+### 検証状況
+
+- 2026-08-04: crosslog-back に `.worktreeinclude` を設置（`.git/info/exclude` で無視）／global gitignore に override を追加。**override による実起動はまだ検証していない**
 
 ## 掃除
 
