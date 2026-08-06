@@ -71,10 +71,14 @@
       "Bash(psql:*)",
       "Bash(mysql:*)"
     ],
-    "ask": [
-      "Bash(git push *)"
-    ],
+    "ask": [],
     "defaultMode": "auto"
+  },
+  "model": "opus[1m]",
+  "skillOverrides": {
+    "find-skills": "off",
+    "herdr": "off",
+    "grill-me": "off"
   },
   "statusLine": {
     "type": "command",
@@ -82,18 +86,20 @@
     "padding": 0
   },
   "enabledPlugins": {
-    "expo-app-design@expo-plugins": true,
-    "upgrading-expo@expo-plugins": true,
-    "expo-deployment@expo-plugins": true,
+    "expo-app-design@expo-plugins": false,
+    "upgrading-expo@expo-plugins": false,
+    "expo-deployment@expo-plugins": false,
     "code-simplifier@claude-plugins-official": false,
-    "playwright-cli@playwright-cli": true,
+    "playwright-cli@playwright-cli": false,
     "ruby-lsp@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "figma@claude-plugins-official": true,
     "crosslog@crosslog-plugins": true,
-    "swift-lsp@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true
+    "swift-lsp@claude-plugins-official": false,
+    "playwright@claude-plugins-official": true,
+    "notion@claude-plugins-official": true,
+    "slack@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "crosslog-plugins": {
@@ -108,6 +114,7 @@
   "advisorModel": "fable",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
+  "theme": "dark",
   "remoteControlAtStartup": false,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
