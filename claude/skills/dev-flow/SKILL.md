@@ -59,10 +59,12 @@ argument-hint: "[Issue番号 または 作業内容]"
 
 1. **対象リポジトリ**と作業ディレクトリ
 2. **Issue 番号**（引数で渡されていなければ聞く。無いなら「Issue なし」と明示する）
-3. **ブランチ名とベースブランチ** — リポジトリの `.claude/rules/git-workflow.md` を読んで規約に合わせる。webapp では:
-   - 通常開発 `feature/{app}/#{Issue番号}-{タイトル}` → base `develop`
-   - 緊急バグ修正 `hotfix/{app}/#{Issue番号}-{タイトル}` → base `main`
-   - **どちらか迷ったら聞く。** hotfix を develop に出すと、リリース経路がずれる
+3. **ブランチ名とベースブランチ** — **対象リポジトリの `.claude/rules/git-workflow.md` を必ず読む。規約はリポジトリごとに違う。**
+   - webapp: 通常開発 `feature/{app}/#{Issue番号}-{タイトル}` → base `develop` ／ 緊急バグ修正 `hotfix/{app}/#{Issue番号}-{タイトル}` → base `main`
+   - baas-platform: `feature/{service}/#{Issue番号}-{タイトル}` → base **`main`**（`develop` は存在しない）
+   - **他リポの規約を流用しない。** 実測では webapp の `develop` を baas-platform に使おうとして `couldn't find remote ref develop` で失敗した。
+     迷ったら `gh repo view <repo> --json defaultBranchRef` と既存 PR の `baseRefName` で確認する
+   - hotfix を develop に出すとリリース経路がずれる。どちらか判断できないときは聞く
 4. **実装スコープ** — 何をどう変えるかの要約。Issue 本文に「対応方針」があればそれを引く
 5. **④の品質ゲートの中身** — 実際に走らせるコマンド（下の「④」参照）
 6. **⑧のテスト実施環境** — どのアプリをどこで起動して撮るか
@@ -123,7 +125,20 @@ argument-hint: "[Issue番号 または 作業内容]"
 
 ## ② worktree を作って進入する
 
-`worktree` スキルの方針に従う。要点だけ再掲する（詳細は正本を読む）:
+### 複数リポジトリを触るタスクでは `EnterWorktree` を使わない
+
+**`EnterWorktree` は現在のリポジトリにしか worktree を作れない。** さらに worktree に進入すると隔離ガードが働き、
+**他リポジトリのパスを触るコマンドが拒否される**。フロントとサーバの両方を変えるタスクでは成立しない。
+
+→ その場合は **`git worktree add` で各リポジトリに worktree を作り、進入せず絶対パスで作業する**。
+`worktree` スキルの「ネイティブ機能を使う」方針からの逸脱になるが、リポジトリ跨ぎでは他に手が無い。
+**逸脱することと理由をユーザーに伝えてから進む。**
+
+- 手動作成では `.worktreeinclude` が処理されない。gitignore された設定ファイルは自分でコピーする
+  （baas-platform は不要。crosslog-back は必要）
+- 単一リポジトリで完結するタスクなら `EnterWorktree` を使ってよい
+
+### 以下は `worktree` スキルの要点（詳細は正本を読む）
 
 - **Claude Code のネイティブ機能を使う**（`claude --worktree <名前>` / `EnterWorktree`）。自作スクリプトは使わない
 - 進入直後に **`mise trust`**（webapp / crosslog-front）
@@ -149,6 +164,13 @@ worktree セッションでは**素の単独コマンドに分割する**。`for
 
 - **①で確かめた前提が、実装中に崩れたら止まる。** 実装しながら「この方針では直らない」と分かることがある。
   そのまま辻褄を合わせに行かず、①の「設計が固まっていないときは実装に入らない」に戻る
+- **設計ドキュメントの「要件」が実コードと食い違うことがある。** 設計時に想定した挙動が、
+  既に別の経路で実現されている／そもそも起きない、というケース。この場合は止まらず、
+  **現状の挙動を実コードで確かめて、現状維持が正しいなら要件のほうを直して進む**（そのうえで設計ドキュメントも直す）。
+  実測では「解散した施設の名前を出す」という要件が、既存処理が所属をクリアしているため
+  実は挙動変更になると分かり、要件から外した
+- **作業中に本題と無関係な問題（別の脆弱性・秘密情報の混入など）を見つけても、そこで作業を止めない。**
+  記録して先へ進み、⑨の報告に含める。本題の流れを切らないため
 - **サーバーサイドは TDD**（ユーザーの明示ルール）。テストを書いてから実装する
 - 実装が終わったら**不要になったファイル・コードを消す**。④の前にやる（消し忘れがレビュー指摘になって⑦が1周増える）
 - **コミットはまだしない。** ④の品質ゲートを通してからコミットする
@@ -166,9 +188,23 @@ worktree セッションでは**素の単独コマンドに分割する**。`for
 | webapp / connect | `pnpm --filter connect run check:all` |
 | webapp / report | `pnpm --filter report-front run check:all` |
 | webapp / video | `pnpm --filter video-front run format` と `check-types`（`check:all` は無い） |
-| baas-platform ほか back系 | rspec + rubocop（リポジトリの CLAUDE.md に従う） |
+| baas-platform ほか back系 | `make rspec` / `make rubocop`（`containers/services/<service>/` で実行）。**ただし worktree では下記の注意** |
 
 - **`<app>` は package.json の `name`**（`connect` / `report-front` / `video-front`）であってディレクトリ名ではない
+- **webapp でルールを変更したら `pnpm --filter connect run test:rules:firestore` も回す。**
+  `check:all` は format / check-types / jest のみで、**Firestore ルールのテストを含まない**
+
+### back系 worktree でテストを回すときの落とし穴
+
+- **`make rspec` は起動済みコンテナに `exec` する。** worktree のディレクトリから叩いても、
+  コンテナがマウントしているのは**メインクローンのコード**なので、worktree の変更はテストされない
+- **`docker compose run -v <worktree>:/app` の上書きは効かない。** サービス定義側の `volumes` が優先される。
+  実測では `/app` がメインクローンのままで、新規追加したファイルが `cannot load such file` になった
+- → **専用の compose ファイル（`worktree` スキルの方式A）を用意する。** 既存の MySQL のネットワークに
+  `external: true` で相乗りし、`command: sleep infinity` でサーバーは起動しない（既存のポートを奪わない）
+  - gems をイメージに焼いているサービスでは、**`/usr/local/bundle` を named volume で覆わない**（覆うと gem が消える）
+  - 新しい compose ファイル名は global gitignore に載っていないことがある。リポジトリの `.git/info/exclude` に入れる
+  - テスト DB 名がハードコードのサービスでは、メインクローンとテスト DB を共有する。**同時にテストを走らせない**
 - **落ちたら直して再実行する。** 通るまで先へ進まない。直し方に選択肢があるときだけ止まって聞く
 - コミットメッセージは `<prefix>: <内容> (#<Issue番号>)`。
   **「レビュー対応」などコードから読み取れない文脈を書かない**（⑦でのコミットも同じ）
@@ -254,6 +290,11 @@ worktree: <パス>。**「完了」と言ってもらえれば片付けます**�
 - **段を飛ばさない。** 特に④（品質ゲート）を飛ばして push すると、⑦で lint 由来の指摘が積まれて余計に周回する
 - **途中から呼ばれることがある。** 「PR は作ってあるからレビュー対応とテストだけ」のような場合は、
   現在地を `git branch` / `gh pr view` で判定し、**該当する段から始める**。①の計画提示はその場合も行う（範囲を明示するため）
+- **1回の dev-flow に収まらない規模のことがある。** 複数リポジトリ・複数 PR に分かれる施策では、
+  ①で**全体の分解を示したうえで「今回はどこまでか」を決める**。全部を1回で流そうとしない。
+  依存順（サーバ追加 → クライアント切替 → 締め）とリリース順（対の PR は同時）は別物なので、両方を①で明示する
+- **コミット本文・PR 本文は worktree 内のファイルに書いて `-F` / `--body-file` で渡し、使い終わったら消す。**
+  消し忘れるとリポジトリに残る（実測: `COMMIT_MSG.txt` / `PR_BODY.md` を毎回消す運用にした）
 - **worktree に入ったら、Read / Grep のパスをすべて worktree 配下に切り替える。**
   進入前の会話に残っている main checkout の絶対パスを使い続けると別ツリーを読む
 - **このスキルは実装の良し悪しを判断しない。** 自己レビューを厚くしたいなら、③の後に `/crosslog:qa-review-loop` を別途回す
