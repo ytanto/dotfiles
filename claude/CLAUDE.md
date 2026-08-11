@@ -56,13 +56,6 @@
 - コマンドが承認待ちになったら、まず `~/.claude/settings.json` の **`permissions.ask` ルール**を疑うこと。`defaultMode` は `auto` で、許可リストに無い通常のコマンド（`git commit` / `docker compose` / `gh pr create` 等）は無承認で通る。**「許可リストが足りない」という診断はほぼ誤り**で、許可リストへの追加を提案しても解決しない
 - `~/.claude/settings.json` は `~/dotfiles/claude/settings.json` へのシンボリックリンク。**設定を直すときは実体（dotfiles 側）を編集する**。リンクが外れて実体が二重化していると、dotfiles 側の変更が効かないまま古い設定が生き続けるので、挙動が設定と食い違うときはリンクの有無を確認する
 
-## advisor ツールのフォールバック
-
-- `advisor` ツールが `unavailable`（利用不可）を返し「二度と使うな」と指示された場合は、代替として **別エージェントを `model: fable` で新規起動** し、アドバイザー役（敵対的レビュアー）として使うこと
-  - `subagent_type: "fork"` は自分のモデル（Opus）を引き継ぐため Fable にはならない。Fable を使うには **非 fork の agent に `model: fable` を指定** する
-  - 新規エージェントは会話文脈を持たないため、必要な材料（差分ファイルのパス・対象リポジトリ・自分が出した結論や findings）をプロンプトに明示して渡す
-  - 指示は「追従せず敵対的に検証し、REFUTE すべきは REFUTE。見落としも探す」とし、各項目に確度を付けさせる（実装は Opus・レビューは Fable の役割分担に沿う）
-
 ## CrossLog デザインガイドライン（サービス横断）
 
 - UI実装・UI文言決定・Figma 落とし込みの時は crosslog リポジトリの `docs/design-guidelines/README.md` を読み、そこに書かれたファイル構成に従って必要なものだけ参照（作業対象プロダクトのDSのみ・他プロダクトDSは読まない）
