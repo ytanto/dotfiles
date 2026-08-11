@@ -51,4 +51,11 @@ $ ln -s dotfiles/git/.gitconfig ~/.gitconfig
 ## herdr (https://herdr.dev)
 $ mkdir -p ~/.config/herdr
 $ ln -s ~/dotfiles/herdr/config.toml ~/.config/herdr/config.toml
+
+## mise (https://mise.jdx.dev)
+$ brew install mise
+$ mkdir -p ~/.config/mise
+$ ln -s ~/dotfiles/mise/config.toml ~/.config/mise/config.toml
+$ mise trust ~/dotfiles/mise/config.toml # シンボリックリンク先は trust しないと読み込まれない
+$ mise install
 ```
