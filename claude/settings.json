@@ -106,7 +106,8 @@
       "source": {
         "source": "github",
         "repo": "crossloglife/claude-plugins"
-      }
+      },
+      "autoUpdate": true
     }
   },
   "language": "japanese",
