@@ -60,6 +60,11 @@ cursor-style = block
 cursor-style-blink = false
 shell-integration-features = no-cursor
 
+# Option を Alt(Meta) として PTY に送る。Claude Code の meta+ 系
+# ショートカット（push-to-talk / モデル選択など）を使うため。
+# 代償として Option+文字 の特殊文字入力は無効になる。
+macos-option-as-alt = true
+
 # その他
 mouse-scroll-multiplier = 0.2
 clipboard-read = allow

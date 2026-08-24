@@ -27,6 +27,7 @@
       "Bash(git fetch:*)",
       "Bash(git symbolic-ref:*)",
       "Bash(git diff *)",
+      "Bash(git push:*)",
       "Bash(gh pr create *)",
       "Bash(gh pr view *)",
       "Bash(gh pr list *)",
@@ -34,7 +35,11 @@
       "Bash(gh api *)",
       "Bash(gh api graphql *)",
       "Bash(gh pr checks *)",
+      "Bash(gh pr comment *)",
+      "Bash(gh pr edit *)",
       "Bash(gh run view *)",
+      "Bash(gh run list *)",
+      "Bash(gh run watch *)",
       "Bash(gh issue create *)",
       "Bash(gh issue *)",
       "Bash(/usr/bin/make *)",
@@ -51,6 +56,7 @@
       "mcp__plugin_playwright_playwright__browser_fill_form",
       "mcp__plugin_playwright_playwright__browser_click",
       "mcp__plugin_playwright_playwright__browser_run_code",
+      "mcp__plugin_playwright_playwright__browser_run_code_unsafe",
       "mcp__plugin_playwright_playwright__browser_console_messages",
       "Bash(playwright-cli *)",
       "Bash(playwright-cli:*)",
@@ -119,5 +125,9 @@
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
+  "voice": {
+    "enabled": true,
+    "mode": "tap"
+  },
   "autoUpdates": true
 }
