@@ -15,10 +15,6 @@ fi
 
 # My configuration
 
-# aliases
-# alias ll='ls -l -G'
-# alias la='ls -al -G'
-
 # ディレクトリ名でcdを無効
 unsetopt auto_cd
 
@@ -30,9 +26,6 @@ setopt auto_menu
 
 # カッコの対応などを自動的に補完
 setopt auto_param_keys
-
-# 補完機能を使用する
-autoload -U compinit && compinit
 
 # 補完候補を初回のTABで一覧表示(default ON)
 setopt auto_list
@@ -58,7 +51,6 @@ alias rc='redis-cli'
 
 # Docker
 alias d='docker'
-alias dm='docker-machine'
 alias dc='docker-compose'
 alias dps='docker ps --format "{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Command}}\t{{.RunningFor}}"'
 alias de='docker exec -it `dps | peco | cut -f 1` /bin/bash'
@@ -66,12 +58,6 @@ alias de='docker exec -it `dps | peco | cut -f 1` /bin/bash'
 # Git
 alias -g lb='`git branch | $FILTERING_TOOL --prompt "GIT BRANCH>" | head -n 1 | sed -e "s/^\*\s*//g"`'
 alias -g rb='`git branch -r | $FILTERING_TOOL --prompt "GIT BRANCH>" | head -n 1 | sed -e "s/^\*\s*//g" | sed "s/origin\///"`'
-
-# Emacs
-alias ec='emacsclient -n'
-
-# Vagrant
-alias v='vagrant'
 
 # Kubernetes
 alias k='kubectl'
@@ -84,9 +70,6 @@ export EDITOR=vim
 
 # make
 alias a='make'
-
-# svn
-alias s='svn'
 
 # peco
 
@@ -137,51 +120,12 @@ if [ -f $ZDOTDIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
   source $ZDOTDIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi
 
-# Homebrewで入れた場合
-if [ -f /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
-    source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-fi
-
 ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets)
-
-# GCP
-# source "/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
-# source "/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
 
 # Tab Title
 function chpwd() { ls; echo -ne "\033]0;$(pwd | rev | awk -F \/ '{print "/"$1"/"$2}'| rev)\007"}
 
-# XAMPPを使う時だけコメントを解除する。pyenvが変になる。
-# settins for XAMPP
-# export PATH=$PATH:/Applications/XAMPP/xamppfiles/bin
-# export PATH=/Applications/XAMPP/xamppfiles/bin:$PATH
-
-# multipass
-alias m=multipass
-
-# .zshrc
-# alias make1='make $1 SSH_HOST=isucon10-qualify-1 SSH_BENCH_HOST=isucon10-qualify-1'
-# alias make2='make $1 SSH_HOST=isucon10-qualify-2 SSH_BENCH_HOST=isucon10-qualify-2'
-# alias make3='make $1 SSH_HOST=isucon10-qualify-3 SSH_BENCH_HOST=isucon10-qualify-3'
-# alias make1='make $1 SSH_HOST=isucon11-qualify-1 SSH_BENCH_HOST=isucon11-qualify-1'
-# alias make2='make $1 SSH_HOST=isucon11-qualify-2 SSH_BENCH_HOST=isucon11-qualify-2'
-# alias make3='make $1 SSH_HOST=isucon11-qualify-3 SSH_BENCH_HOST=isucon11-qualify-3'
-alias make1='make $1 SSH_HOST=isucon12-qualify-1 SSH_BENCH_HOST=isucon12-qualify-1'
-alias make2='make $1 SSH_HOST=isucon12-qualify-2 SSH_BENCH_HOST=isucon12-qualify-2'
-alias make3='make $1 SSH_HOST=isucon12-qualify-3 SSH_BENCH_HOST=isucon12-qualify-3'
 export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
-
-if [ -f /opt/homebrew/opt/asdf/libexec/asdf.sh ]; then
-  # Load asdf if it exists
-  . /opt/homebrew/opt/asdf/libexec/asdf.sh
-fi
-
-
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/tannaka/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/tannaka/Downloads/google-cloud-sdk/path.zsh.inc'; fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f '/Users/tannaka/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/tannaka/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
 
 ## [Completion]
 ## Completion scripts setup. Remove the following line to uninstall

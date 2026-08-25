@@ -18,23 +18,12 @@ fi
 export ZDOTDIR=$HOME/dotfiles/zsh
 export HISTFILESIZE=10000
 
-# settings for Go
-export GOPATH=$HOME/Documents/src/go
-export PATH=$GOPATH/bin:$PATH
-
-# export PATH=$HOME/bin:/usr/local/bin:$PATH:$GOPATH/bin
-
 # settings for less
 export LESSHISTFILE=-
 
 
 # settings for Poetry
 export PATH=$HOME/.local/bin:$PATH
-
-# settings for cd-bookmark
-fpath=($HOME/dotfiles/functions/cd-bookmark(N-/) $fpath)
-autoload -Uz cd-bookmark
-alias cb='cd-bookmark'
 
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -53,26 +42,9 @@ export ANDROID_HOME=$HOME/Library/Android/sdk
 export PATH=$PATH:$ANDROID_HOME/emulator
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 
-# settings for Genymotion
-export PATH=/Applications/Genymotion.app/Contents/MacOS/tools:$PATH
-
-# settins for SqlPLus
-export ORACLE_HOME=~/Documents/src/cotos/sqlplus/instantclient_18_1
-export PATH=$ORACLE_HOME:$PATH
-export DYLD_LIBRARY_PATH=~/Documents/src/cotos/sqlplus/instantclient_18_1
-export NLS_LANG=Japanese_Japan.AL32UTF8
-
 # settings for Homebrew
 export PATH=$PATH:/opt/homebrew/bin
 
-# lima
-#export DOCKER_HOST=unix:///${HOME}/.lima/docker/sock/docker.sock
-
-# .Net
-# export PATH=$PATH:$HOME/.dotnet/tools
-
-# psql
-export PATH=/opt/homebrew/opt/libpq/bin:$PATH
 . "$HOME/.cargo/env"
 
 # For Android build
