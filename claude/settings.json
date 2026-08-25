@@ -118,6 +118,10 @@
   },
   "language": "japanese",
   "effortLevel": "high",
+  "voice": {
+    "enabled": true,
+    "mode": "tap"
+  },
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
   "theme": "dark",
@@ -125,9 +129,5 @@
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
-  "voice": {
-    "enabled": true,
-    "mode": "tap"
-  },
   "autoUpdates": true
 }
