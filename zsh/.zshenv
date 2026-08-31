@@ -27,6 +27,9 @@ export PATH=$HOME/.local/bin:$PATH
 
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 
+# dotfiles 管理の自作スクリプト。実体をそのまま PATH に載せ、symlink 管理を挟まない
+export PATH=$HOME/dotfiles/bin:$PATH
+
 case ${OSTYPE} in
     darwin*)
         export FILTERING_TOOL=peco

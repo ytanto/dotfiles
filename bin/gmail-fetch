@@ -1,0 +1,279 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#   "google-api-python-client>=2.100",
+#   "google-auth-oauthlib>=1.2",
+# ]
+# ///
+"""Gmail を検索し、本文中の URL を取り出す読み取り専用 CLI。
+
+E2E テストで「実際に届いたメール」を検証する用途を想定している。
+スコープを gmail.readonly に固定しているのは、資格情報が漏れても
+閲覧しかできない状態に被害を限定するため（アプリパスワードによる
+IMAP 接続だと同じ資格情報で送信・削除まで可能になってしまう）。
+"""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import email
+import email.policy
+import html
+import json as jsonlib
+import os
+import re
+import sys
+import time
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+from google.auth.exceptions import RefreshError
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+
+SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+
+CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "gmail-fetch"
+CREDENTIALS_PATH = CONFIG_DIR / "credentials.json"
+TOKEN_PATH = CONFIG_DIR / "token.json"
+
+URL_RE = re.compile(r"""https?://[^\s<>"']+""")
+
+# 認証系ヘッダは配信テスト（SPF / DKIM / DMARC の pass 判定）で参照する
+AUTH_HEADERS = ("Authentication-Results", "Received-SPF", "DKIM-Signature", "Return-Path")
+
+SETUP_HINT = f"""OAuth クライアントの認証情報がありません: {CREDENTIALS_PATH}
+
+次の手順で用意してください（対象の Google アカウントで実施すること）。
+  1. https://console.cloud.google.com/ でプロジェクトを作成
+  2. 「API とサービス」→ ライブラリ → Gmail API を有効化
+  3. 「OAuth 同意画面」を External で作成し、対象アカウントをテストユーザーに追加
+  4. 「認証情報」→ OAuth クライアント ID → アプリケーションの種類「デスクトップアプリ」
+  5. ダウンロードした JSON を配置する:
+       mkdir -p {CONFIG_DIR}
+       mv ~/Downloads/client_secret_*.json {CREDENTIALS_PATH}
+       chmod 600 {CREDENTIALS_PATH}
+"""
+
+
+def die(message: str, code: int) -> None:
+    print(message, file=sys.stderr)
+    raise SystemExit(code)
+
+
+def save_token(creds: Credentials) -> None:
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    TOKEN_PATH.write_text(creds.to_json())
+    TOKEN_PATH.chmod(0o600)
+
+
+def load_credentials(force_reauth: bool = False) -> Credentials:
+    if not CREDENTIALS_PATH.exists():
+        die(SETUP_HINT, code=3)
+
+    creds = None
+    if TOKEN_PATH.exists() and not force_reauth:
+        try:
+            creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
+        except ValueError:
+            creds = None
+
+    if creds and creds.valid:
+        return creds
+
+    if creds and creds.expired and creds.refresh_token:
+        try:
+            creds.refresh(Request())
+            save_token(creds)
+            return creds
+        except RefreshError:
+            # 同意画面が Testing のままだと refresh token は 7 日ほどで失効する。
+            # そこで止めるとテストが刺さるので、黙ってブラウザ認証に倒す
+            print("トークンが失効しました。ブラウザで再認証します。", file=sys.stderr)
+
+    flow = InstalledAppFlow.from_client_secrets_file(str(CREDENTIALS_PATH), SCOPES)
+    creds = flow.run_local_server(port=0)
+    save_token(creds)
+    return creds
+
+
+def build_query(to: str | None, subject: str | None, after_epoch: int) -> str:
+    parts = [f"after:{after_epoch}"]
+    if to:
+        parts.append(f"to:{to}")
+    if subject:
+        parts.append(f'subject:"{subject}"')
+    return " ".join(parts)
+
+
+def search(service, query: str, after_ms: int, limit: int) -> list[dict]:
+    # includeSpamTrash を外すと迷惑メール判定されたものが結果から消え、
+    # 「配信されていない」と誤判定する
+    listed = (
+        service.users()
+        .messages()
+        .list(userId="me", q=query, includeSpamTrash=True, maxResults=limit)
+        .execute()
+    )
+
+    hits = []
+    for ref in listed.get("messages", []):
+        msg = service.users().messages().get(userId="me", id=ref["id"], format="raw").execute()
+        # 検索構文の after: は日付単位に丸められることがあるため、
+        # 受信時刻そのもの（internalDate）で絞り直す
+        if int(msg.get("internalDate", 0)) < after_ms:
+            continue
+        hits.append(msg)
+
+    hits.sort(key=lambda m: int(m.get("internalDate", 0)), reverse=True)
+    return hits
+
+
+def parse_message(msg: dict):
+    raw = base64.urlsafe_b64decode(msg["raw"].encode())
+    return email.message_from_bytes(raw, policy=email.policy.default)
+
+
+def body_text(mail) -> str:
+    part = mail.get_body(preferencelist=("plain", "html"))
+    if part is None:
+        return ""
+    text = part.get_content()
+    if part.get_content_type() == "text/html":
+        text = html.unescape(text)
+    return text
+
+
+def extract_urls(text: str, match: str | None) -> list[str]:
+    urls = []
+    seen = set()
+    for found in URL_RE.findall(text):
+        # 文末の句読点や閉じ括弧まで URL に含めない
+        url = html.unescape(found.rstrip(".,)>]"))
+        if match and match not in url:
+            continue
+        if url in seen:
+            continue
+        seen.add(url)
+        urls.append(url)
+    return urls
+
+
+def warn_if_filtered(labels: list[str]) -> None:
+    flagged = [label for label in labels if label in ("SPAM", "TRASH")]
+    if flagged:
+        print(f"警告: このメールは {'/'.join(flagged)} に振り分けられています", file=sys.stderr)
+
+
+def render(mail, msg: dict, urls: list[str], args) -> None:
+    labels = msg.get("labelIds", [])
+
+    if args.json:
+        payload = {
+            "id": msg["id"],
+            "from": mail["From"],
+            "to": mail["To"],
+            "subject": mail["Subject"],
+            "date": mail["Date"],
+            "labels": labels,
+            "urls": urls,
+        }
+        if args.headers:
+            payload["headers"] = {h: mail[h] for h in AUTH_HEADERS if mail[h]}
+        if args.body:
+            payload["body"] = body_text(mail)
+        print(jsonlib.dumps(payload, ensure_ascii=False, indent=2))
+        return
+
+    print(f"From:    {mail['From']}")
+    print(f"To:      {mail['To']}")
+    print(f"Subject: {mail['Subject']}")
+    print(f"Date:    {mail['Date']}")
+    print(f"Labels:  {', '.join(labels)}")
+
+    if args.headers:
+        print()
+        for header in AUTH_HEADERS:
+            if mail[header]:
+                print(f"{header}: {mail[header]}")
+
+    if urls:
+        print()
+        for url in urls:
+            print(f"URL:     {url}")
+
+    if args.body:
+        print()
+        print(body_text(mail))
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Gmail を読み取り専用で検索し、本文中の URL を取り出す",
+    )
+    parser.add_argument("--to", help="宛先で絞る（+タグ付きアドレスも可）")
+    parser.add_argument("--subject", help="件名の部分一致で絞る")
+    parser.add_argument("--since", type=int, default=15, help="何分前までを対象にするか（既定: 15）")
+    parser.add_argument("--wait", type=int, default=0, help="見つかるまで待つ秒数（既定: 0）")
+    parser.add_argument("--interval", type=int, default=5, help="待機中の再試行間隔（既定: 5）")
+    parser.add_argument("--limit", type=int, default=20, help="検索する最大件数（既定: 20）")
+    parser.add_argument("--url-match", help="URL のうちこの文字列を含むものだけ出す")
+    parser.add_argument("--url-only", action="store_true", help="URL だけを出力する")
+    parser.add_argument("--body", action="store_true", help="本文も出力する")
+    parser.add_argument("--headers", action="store_true", help="SPF / DKIM などの認証系ヘッダも出力する")
+    parser.add_argument("--json", action="store_true", help="JSON で出力する")
+    parser.add_argument("--auth", action="store_true", help="再認証だけ行う")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+
+    if args.auth:
+        load_credentials(force_reauth=True)
+        print("認証しました")
+        return 0
+
+    creds = load_credentials()
+    service = build("gmail", "v1", credentials=creds, cache_discovery=False)
+
+    after = datetime.now(timezone.utc) - timedelta(minutes=args.since)
+    after_epoch = int(after.timestamp())
+    query = build_query(args.to, args.subject, after_epoch)
+
+    deadline = time.monotonic() + args.wait
+    while True:
+        hits = search(service, query, after_epoch * 1000, args.limit)
+        if hits:
+            break
+        if time.monotonic() >= deadline:
+            print(f"該当するメールがありません（検索条件: {query}）", file=sys.stderr)
+            return 1
+        time.sleep(args.interval)
+
+    if len(hits) > 1:
+        print(f"{len(hits)} 件見つかりました。最新の 1 件を出力します。", file=sys.stderr)
+
+    msg = hits[0]
+    mail = parse_message(msg)
+    warn_if_filtered(msg.get("labelIds", []))
+    urls = extract_urls(body_text(mail), args.url_match)
+
+    if args.url_only:
+        if not urls:
+            print("本文から URL を抽出できませんでした", file=sys.stderr)
+            return 2
+        for url in urls:
+            print(url)
+        return 0
+
+    render(mail, msg, urls, args)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
