@@ -63,7 +63,7 @@ UI 変更の扱いは①で次の 4 つに分ける。UI レーンに入るの�
 | ①での判定 | ③ 実装 | ④ 自己検査 | ⑦⑧ デザイナー |
 |---|---|---|---|
 | UI 変更なし | 通常実装 | 飛ばす | 飛ばす |
-| **Figma あり** | 対象リポの Figma 手順で組む（`references/repos/` に所在。Figma MCP を使うなら `figma-design-to-code` スキルを先に読む） | 飛ばす（Figma との突合は⑥のキャプチャと⑩の証跡で足りる） | 飛ばす |
+| **Figma あり** | 対象リポの `figma-implement` スキルで組む（無ければリポの rules に従う） | 飛ばす（Figma との突合は figma-implement が持つ。⑥のキャプチャは載せる） | 飛ばす |
 | **Figma なし・叩き台が要る** | `ux-build` | `ux-build` 6.5〜7 + `ux-probe` + `a11y-check` | 実施 |
 | **Figma なし・軽微（ux-build 不要）** | 通常実装 | 飛ばす | 飛ばす |
 
@@ -213,7 +213,7 @@ ls -d ~/.claude/plugins/marketplaces/crosslog-plugins/plugins/crosslog/skills/<n
 
 ### UI 変更の組み方（①で決めたパターンごと）
 
-- **Figma あり**: 対象リポの Figma 手順に従う（所在は `references/repos/`。無いリポは CLAUDE.md）。Figma MCP を使うときは `figma-design-to-code` スキルを先に読み、スクリーンショットの見た目ではなくノード構造・トークン・Code Connect から使うコンポーネントを決める
+- **Figma あり**: 対象リポの `figma-implement` スキルを起動して組む（Figma の読み方・トークン変換・突合はそのスキルが持つ。無いリポは rules と CLAUDE.md に従う）
 - **Figma なし・叩き台が要る（UI レーン）**: `crosslog:ux-build` の Step 0〜5。既存 DS に寄せる → 原則で組む → 状態を網羅 → 文言 → 仕分け。出力は叩き台と**デザイナー確認リスト**（先に決めたい / 決まらなくても進められる / 目を通してほしい仮決め）。迷った箇所は仮決めして進め、リストに積む。確認待ちで手を止めない
 - **Figma なし・軽微**: 通常実装。既存 DS と既存パターンの範囲から出ないことを③の終わりに確かめ、出ていたら「叩き台が要る」に切り替える（①の判定を訂正してユーザーに伝える）
 
