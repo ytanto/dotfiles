@@ -11,6 +11,10 @@ pnpm モノレポ。apps 配下に connect / report / video。**正本は `.clau
 
 hotfix を develop に出すとリリース経路がずれる。どちらか判断できないときは①で聞く。
 
+## Figma から組むとき
+
+`.claude/rules/react/guidelines.md`（Web）と `.claude/rules/react-native/guidelines.md`（connect アプリ）が正本。Figma の扱いは `guidelines.md` と CLAUDE.md にある。
+
 ## 品質ゲート
 
 `<app>` は package.json の `name`（`connect` / `report-front` / `video-front`）であってディレクトリ名ではない。
