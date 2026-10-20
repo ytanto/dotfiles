@@ -1,3 +1,9 @@
 [tools]
+<<<<<<< HEAD
 "npm:firebase-tools" = "latest"
 python = "3.12"
+=======
+node = "lts"
+"npm:netlify-cli" = "latest"
+python = "3.10"
+>>>>>>> f69226c (mise の全体設定に netlify-cli を追加)
