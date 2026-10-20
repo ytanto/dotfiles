@@ -28,20 +28,18 @@
       "Bash(git symbolic-ref:*)",
       "Bash(git diff *)",
       "Bash(git push:*)",
-      "Bash(gh pr create *)",
-      "Bash(gh pr view *)",
-      "Bash(gh pr list *)",
-      "Bash(gh pr diff *)",
-      "Bash(gh api *)",
-      "Bash(gh api graphql *)",
-      "Bash(gh pr checks *)",
-      "Bash(gh pr comment *)",
-      "Bash(gh pr edit *)",
-      "Bash(gh run view *)",
-      "Bash(gh run list *)",
-      "Bash(gh run watch *)",
-      "Bash(gh issue create *)",
-      "Bash(gh issue *)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh api:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr comment:*)",
+      "Bash(gh pr edit:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run watch:*)",
+      "Bash(gh issue:*)",
       "Bash(/usr/bin/make *)",
       "Bash(npx tsc*)",
       "WebFetch(domain:firebase.google.com)",
@@ -80,7 +78,7 @@
     "ask": [],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
+  "model": "opus",
   "skillOverrides": {
     "find-skills": "off",
     "herdr": "off",
@@ -88,7 +86,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "npx -y ccstatusline@latest",
+    "command": "$HOME/.local/share/mise/shims/ccstatusline",
     "padding": 0
   },
   "enabledPlugins": {
@@ -118,6 +116,11 @@
   },
   "language": "japanese",
   "effortLevel": "high",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "medium"
+    }
+  },
   "voice": {
     "enabled": true,
     "mode": "tap"
@@ -125,6 +128,7 @@
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
   "theme": "dark",
+  "switchModelsOnFlag": true,
   "remoteControlAtStartup": false,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
