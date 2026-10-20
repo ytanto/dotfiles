@@ -30,3 +30,5 @@ git/.gitignore_global
 .zsh_sessions
 # 公開しないローカル専用ファイル（社内固有のルール・実測ログなど）
 *.local/
+# uv run --script が生成する依存ロック（再現性より最新追従を優先する）
+bin/*.lock
