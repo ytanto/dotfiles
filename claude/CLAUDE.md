@@ -54,6 +54,15 @@
   - コミット本文・PR 本文・Issue 本文は **worktree 内のファイル**に書き出し、`-F <file>` / `--body-file <file>` で渡す。scratchpad（worktree 外）のファイルを直接渡すと弾かれるので、必要なら worktree 内へ `cp` してから使う
   - 複数ファイルを確認する場合もループにせず1ファイルずつ読む
 
+## このマシンのシェルの癖（macOS / zsh、bash は 3.2）
+
+- ファイルの上書きは `>` でなく `>|` を使う（理由: zsh の noclobber で `>` による上書きは拒否される）
+- bash スクリプトで `declare -A`（連想配列）や `mapfile` を使わない（理由: システムの bash は 3.2 で未対応。必要なら perl か配列 2 本で代替する）
+- ミリ秒以下の計時に `date +%s%N` を使わない（理由: BSD date は `%N` 非対応。perl の `Time::HiRes` を使う）
+- 多バイト文字を含む入力を `sed` / `grep` に通すときは `LC_ALL=C` を付ける（理由: "illegal byte sequence" で落ちる）
+- 複数の Bash 呼び出しを並列に出すときはパスを絶対パスで書き、`cd` に頼らない（理由: 片方の `cd` が他方の作業ディレクトリを変える）
+- 対話シェル側で関数や alias に置き換えているコマンド（`diff` 等）は絶対パスで呼ぶ（例: `/usr/bin/diff`。理由: ツールが使う非対話シェルにはその定義が無く "command not found" になる）
+
 ## 承認を求められた原因を取り違えない
 
 - コマンドが承認待ちになったら、まず `~/.claude/settings.json` の **`permissions.ask` ルール**を疑うこと。`defaultMode` は `auto` で、許可リストに無い通常のコマンド（`git commit` / `docker compose` / `gh pr create` 等）は無承認で通る。**「許可リストが足りない」という診断はほぼ誤り**で、許可リストへの追加を提案しても解決しない
