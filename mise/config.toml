@@ -1,4 +1,5 @@
 [tools]
+node = "lts"
 "npm:firebase-tools" = "latest"
 "npm:netlify-cli" = "latest"
 python = "3.12"
