@@ -67,13 +67,29 @@ def die(message: str, code: int) -> None:
 
 def save_token(creds: Credentials) -> None:
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    TOKEN_PATH.write_text(creds.to_json())
-    TOKEN_PATH.chmod(0o600)
+    CONFIG_DIR.chmod(0o700)
+    # 書き込んでから chmod にすると、その間だけ umask 依存の権限で存在する。
+    # 既存ファイルには O_CREAT のモードが効かないため fchmod で揃えてから書く
+    fd = os.open(TOKEN_PATH, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    os.fchmod(fd, 0o600)
+    with os.fdopen(fd, "w") as handle:
+        handle.write(creds.to_json())
+
+
+def warn_if_group_or_world_readable(path: Path) -> None:
+    if path.stat().st_mode & 0o077:
+        print(
+            f"警告: {path} を他ユーザーが読める権限になっています（chmod 600 を推奨）",
+            file=sys.stderr,
+        )
 
 
 def load_credentials(force_reauth: bool = False) -> Credentials:
     if not CREDENTIALS_PATH.exists():
         die(SETUP_HINT, code=3)
+
+    # 配置は利用者の手順任せなので、緩いまま使い続けていないかを毎回見る
+    warn_if_group_or_world_readable(CREDENTIALS_PATH)
 
     creds = None
     if TOKEN_PATH.exists() and not force_reauth:
