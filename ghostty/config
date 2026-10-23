@@ -78,6 +78,8 @@ clipboard-write = allow
 # herdr に届かないため、Ghostty 側で prefix+キー のバイト列へ写像する。
 # ブラケットは物理キー名だと配列差でマッチしないため、押下文字リテラルで指定。
 keybind = cmd+t=text:\x18c
+# 名前を聞かずに新規タブ（herdr 側の custom command）
+keybind = cmd+shift+t=text:\x18C
 
 # ペイン移動（[ ] 左右、shift 付きで上下）
 keybind = cmd+[=text:\x18h

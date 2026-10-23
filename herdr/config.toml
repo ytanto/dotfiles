@@ -125,6 +125,13 @@ next_agent = "prefix+m"
 # type = "pane"
 # command = "lazygit"
 
+# 新規タブは名前を聞く設定にしているので、聞かずに作る経路を別に用意する。
+# 組み込みの new_tab と同じく、今いるスペースと作業ディレクトリで作る。
+[[keys.command]]
+key = "prefix+shift+c"
+type = "shell"
+command = 'herdr tab create --workspace "$HERDR_ACTIVE_WORKSPACE_ID" --cwd "$HERDR_ACTIVE_PANE_CWD" --focus'
+
 # Legacy indexed shortcut config is still parsed for compatibility.
 # Prefer switch_tab, switch_workspace, and focus_agent for new configs.
 # [keys.indexed]
