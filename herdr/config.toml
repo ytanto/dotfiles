@@ -171,7 +171,7 @@ next_agent = "prefix+m"
 
 # Ask for a tab name before creating a new tab.
 # Set false to create tabs immediately with generated names.
-prompt_new_tab_name = false
+prompt_new_tab_name = true
 
 # Draw borders around split panes.
 # pane_borders = true
