@@ -188,6 +188,9 @@ Find の観点別レビュアーも Screen / Verify / Challenge の各レンズ�
 スキル本文に書いてあってもサブエージェントには伝わらない。
 
 - **実行禁止の明示**: 「コードは修正しない。`lint` / `test` / ビルドは実行しない。使うのは Read / Grep / `git`（`show`/`diff`/`log`）/ `gh` だけ」（→ P7）
+- **ライブラリのソースの探し方**: 「gem・npm パッケージの実装を読むときは `bundle show <gem>` / `gem contents <gem>`（コンテナ内なら `docker compose exec <service> bundle show <gem>`）、
+  `node_modules/<pkg>` で場所を特定する。`find /` などファイルシステム全体の走査は禁止」。
+  場所が分からないと `find /` に走り、複数レンズが並列で全ディスクを舐めてマシンが固まる
 - **リポジトリ固有の「所見にしないもの」**: `references.local/` に運用由来の除外ルールがあれば、
   **その条文をプロンプトに転記する**。書かないと毎回同じ指摘が High で上がってくる
 - **①の変更の意図・設計判断・`baseRefName`・worktree の絶対パス**。リポジトリ横断の主張を検証させるときは
