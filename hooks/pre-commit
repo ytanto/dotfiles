@@ -1,0 +1,16 @@
+#!/bin/sh
+# 公開リポジトリなので、秘密情報が混ざったコミットを手元で止める。
+# 検査できないときもコミットを通さない（黙って素通りすると気づけないため）
+set -eu
+
+if command -v gitleaks >/dev/null 2>&1; then
+  exec gitleaks git --staged --redact --no-banner
+fi
+
+# GUI の git クライアントから呼ばれると mise の PATH が無いことがあるため、mise 経由でも探す
+if command -v mise >/dev/null 2>&1; then
+  exec mise exec gitleaks -- gitleaks git --staged --redact --no-banner
+fi
+
+echo "pre-commit: gitleaks が見つからないためコミットを中止した（mise install で入れる）" >&2
+exit 1

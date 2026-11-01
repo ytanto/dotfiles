@@ -25,6 +25,10 @@ cd ~/dotfiles
 | ccstatusline | `~/.config/ccstatusline/settings.json` |
 | Karabiner-Elements | `~/.config/karabiner`(ディレクトリごと) |
 
+### コミット前の秘密情報チェック
+
+公開リポジトリなので、`install.sh` がこのリポジトリにだけ `core.hooksPath = hooks` を設定し、コミット前に `hooks/pre-commit` が gitleaks でステージ済みの変更を検査する。検出したとき、または gitleaks が見つからないときはコミットを止める。
+
 ### git ユーザー設定(初回のみ)
 
 `install.sh` が `git/.gitconfig.local`(untracked)の雛形を作るので、user.name / user.email を記入する。マシンローカルにしたい git 設定はこのファイルに書く。

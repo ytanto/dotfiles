@@ -65,6 +65,9 @@ EOF
   echo "init: git/.gitconfig.local を作成した。user 設定を記入すること"
 fi
 
+# 公開リポジトリへの秘密情報の混入をコミット前に止める。グローバルにすると他リポジトリのフックを上書きするので、このリポジトリに限る
+git -C "$DOTFILES" config core.hooksPath hooks && echo "ok:   git hooks"
+
 # symlink 先の mise 設定は trust しないと読み込まれない
 if command -v mise >/dev/null 2>&1; then
   mise trust "$DOTFILES/mise/config.toml" >/dev/null 2>&1 && echo "ok:   mise trust"
