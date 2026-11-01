@@ -50,8 +50,6 @@ brew "nkf"
 brew "openjdk"
 # PDF converter to SVG
 brew "pdf2svg"
-# Simplistic interactive filtering tool
-brew "peco"
 # Execute binaries from Python packages in isolated environments
 brew "pipx"
 # Draw UML diagrams
@@ -80,6 +78,8 @@ brew "watchman"
 brew "wget"
 # JavaScript package manager
 brew "yarn"
+# Fish-like autosuggestions for zsh
+brew "zsh-autosuggestions"
 # Fish shell like syntax highlighting for zsh
 brew "zsh-syntax-highlighting"
 cask "font-caskaydia-cove-nerd-font"

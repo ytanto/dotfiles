@@ -25,15 +25,6 @@ cd ~/dotfiles
 | ccstatusline | `~/.config/ccstatusline/settings.json` |
 | Karabiner-Elements | `~/.config/karabiner`(ディレクトリごと) |
 
-### zsh プラグイン(初回のみ)
-
-prezto と zsh-syntax-highlighting はリポジトリ管理外(gitignore 済み)なので clone する。
-
-```sh
-git clone --recursive https://github.com/sorin-ionescu/prezto.git ~/dotfiles/zsh/.zprezto
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/dotfiles/zsh/zsh-syntax-highlighting
-```
-
 ### git ユーザー設定(初回のみ)
 
 `install.sh` が `git/.gitconfig.local`(untracked)の雛形を作るので、user.name / user.email を記入する。マシンローカルにしたい git 設定はこのファイルに書く。

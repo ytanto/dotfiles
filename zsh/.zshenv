@@ -1,9 +1,6 @@
 #
 # Defines environment variables.
 #
-# Authors:
-#   Sorin Ionescu <sorin.ionescu@gmail.com>
-#
 
 # Ensure that a non-login, non-interactive shell has a defined environment.
 if [[ "$SHLVL" -eq 1 && ! -o LOGIN && -s "${ZDOTDIR:-$HOME}/.zprofile" ]]; then
@@ -16,7 +13,6 @@ fi
 
 # settings for zsh
 export ZDOTDIR=$HOME/dotfiles/zsh
-export HISTFILESIZE=10000
 
 # settings for less
 export LESSHISTFILE=-
@@ -30,23 +26,10 @@ export PATH=$HOME/bin:/usr/local/bin:$PATH
 # dotfiles 管理の自作スクリプト。実体をそのまま PATH に載せ、symlink 管理を挟まない
 export PATH=$HOME/dotfiles/bin:$PATH
 
-case ${OSTYPE} in
-    darwin*)
-        export FILTERING_TOOL=peco
-        ;;
-    linux*)
-        # for Bow
-        export FILTERING_TOOL=percol
-        ;;
-esac
-
 # settings for Android Studio
 export ANDROID_HOME=$HOME/Library/Android/sdk
 export PATH=$PATH:$ANDROID_HOME/emulator
 export PATH=$PATH:$ANDROID_HOME/platform-tools
-
-# settings for Homebrew
-export PATH=$PATH:/opt/homebrew/bin
 
 . "$HOME/.cargo/env"
 

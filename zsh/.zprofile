@@ -1,9 +1,6 @@
 #
 # Executes commands at login pre-zshrc.
 #
-# Authors:
-#   Sorin Ionescu <sorin.ionescu@gmail.com>
-#
 
 #
 # Browser
@@ -17,8 +14,8 @@ fi
 # Editors
 #
 
-export EDITOR='nano'
-export VISUAL='nano'
+export EDITOR='vim'
+export VISUAL='vim'
 export PAGER='less'
 
 #
@@ -42,7 +39,10 @@ typeset -gU cdpath fpath mailpath path
 # )
 
 # Set the list of directories that Zsh searches for programs.
+# ログインシェルでは macOS の path_helper が /usr/bin を先頭に並べ直すので、
+# Homebrew の版（git 等）を優先するためにここで先頭へ置く
 path=(
+  /opt/homebrew/{bin,sbin}
   /usr/local/{bin,sbin}
   $path
 )
