@@ -7,10 +7,13 @@ if command -v gitleaks >/dev/null 2>&1; then
   exec gitleaks git --staged --redact --no-banner
 fi
 
-# GUI の git クライアントから呼ばれると mise の PATH が無いことがあるため、mise 経由でも探す
-if command -v mise >/dev/null 2>&1; then
-  exec mise exec gitleaks -- gitleaks git --staged --redact --no-banner
-fi
+# GUI の git クライアントから呼ばれると PATH が /usr/bin 程度しかなく、mise 自体も見つからないため、
+# Homebrew の既定の置き場も直接探す
+for mise in "$(command -v mise 2>/dev/null || true)" /opt/homebrew/bin/mise /usr/local/bin/mise; do
+  if [ -n "$mise" ] && [ -x "$mise" ]; then
+    exec "$mise" exec gitleaks -- gitleaks git --staged --redact --no-banner
+  fi
+done
 
 echo "pre-commit: gitleaks が見つからないためコミットを中止した（mise install で入れる）" >&2
 exit 1
