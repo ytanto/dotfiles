@@ -115,7 +115,7 @@ alias de='docker exec -it `dps | fzf | cut -f 1` /bin/bash'
 
 # Git
 # git branch の表示は現在や worktree のブランチに * や + の印が付き、そのまま使うと引数が壊れるので for-each-ref で名前だけ取る
-alias -g lb='`git for-each-ref --format="%(refname:short)" refs/heads | fzf --prompt "GIT BRANCH>"`'
+alias -g lb='`git for-each-ref --format="%(refname:lstrip=2)" refs/heads | fzf --prompt "GIT BRANCH>"`'
 # リモート名を落としたローカル用の名前で返す（origin/HEAD は実在のブランチではないので候補から外す）
 alias -g rb='`git for-each-ref --format="%(refname:lstrip=3)" refs/remotes | grep -vx HEAD | fzf --prompt "GIT BRANCH>"`'
 
