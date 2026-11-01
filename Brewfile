@@ -79,6 +79,8 @@ cask "teamviewer"
 # 便利ツール・周辺機器
 cask "cleanshot"
 cask "font-caskaydia-cove-nerd-font"
+cask "font-fira-code"
+cask "font-ricty-diminished"
 cask "google-japanese-ime"
 cask "insta360-link-controller"
 cask "karabiner-elements"
