@@ -107,10 +107,6 @@ RPROMPT='${vcs_info_msg_0_}'
 # ビープ音を鳴らさない
 setopt no_beep
 
-# Redis
-alias rs='redis-server'
-alias rc='redis-cli'
-
 # Docker
 alias d='docker'
 alias dc='docker compose'
@@ -118,16 +114,10 @@ alias dps='docker ps --format "{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Command}}\t{
 alias de='docker exec -it `dps | fzf | cut -f 1` /bin/bash'
 
 # Git
-alias -g lb='`git branch | fzf --prompt "GIT BRANCH>" | head -n 1 | sed -e "s/^\*\s*//g"`'
-alias -g rb='`git branch -r | fzf --prompt "GIT BRANCH>" | head -n 1 | sed -e "s/^\*\s*//g" | sed "s/origin\///"`'
-
-# Kubernetes
-alias k='kubectl'
-alias ka='kubectl get all'
-# source <(kubectl completion zsh)
-
-# make
-alias a='make'
+# git branch の表示は現在や worktree のブランチに * や + の印が付き、そのまま使うと引数が壊れるので for-each-ref で名前だけ取る
+alias -g lb='`git for-each-ref --format="%(refname:short)" refs/heads | fzf --prompt "GIT BRANCH>"`'
+# リモート名を落としたローカル用の名前で返す（origin/HEAD は実在のブランチではないので候補から外す）
+alias -g rb='`git for-each-ref --format="%(refname:lstrip=3)" refs/remotes | grep -vx HEAD | fzf --prompt "GIT BRANCH>"`'
 
 # fzf（Ctrl-R で履歴、Ctrl-T でファイル、Alt-C でディレクトリ）
 export FZF_DEFAULT_OPTS='--no-height --layout=reverse --exact'
@@ -152,15 +142,8 @@ function wt() {
 _chpwd_ls_and_title() { ls; print -n "\e]0;${PWD:h:t}/${PWD:t}/\a" }
 chpwd_functions+=(_chpwd_ls_and_title)
 
-export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
-
-## [Completion]
-## Completion scripts setup. Remove the following line to uninstall
-[[ -f /Users/tannaka/.dart-cli-completion/zsh-config.zsh ]] && . /Users/tannaka/.dart-cli-completion/zsh-config.zsh || true
-## [/Completion]
-
-
-export PATH=$PATH:$HOME/.maestro/bin
+# Dart / fvm の補完
+[[ -f $HOME/.dart-cli-completion/zsh-config.zsh ]] && . $HOME/.dart-cli-completion/zsh-config.zsh
 
 # mise
 eval "$(mise activate zsh)"

@@ -9,10 +9,10 @@ export ZDOTDIR=$HOME/dotfiles/zsh
 export LESSHISTFILE=-
 
 
-# settings for Poetry
+# claude や uv など、公式インストーラーが入れるコマンドの置き場
 export PATH=$HOME/.local/bin:$PATH
 
-export PATH=$HOME/bin:/usr/local/bin:$PATH
+export PATH=/usr/local/bin:$PATH
 
 # dotfiles 管理の自作スクリプト。実体をそのまま PATH に載せ、symlink 管理を挟まない
 export PATH=$HOME/dotfiles/bin:$PATH
@@ -22,7 +22,7 @@ export ANDROID_HOME=$HOME/Library/Android/sdk
 export PATH=$PATH:$ANDROID_HOME/emulator
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 
-. "$HOME/.cargo/env"
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
 # For Android build
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
