@@ -22,6 +22,8 @@ cd ~/dotfiles
 | herdr | `~/.config/herdr/config.toml` |
 | mise | `~/.config/mise/config.toml`(trust も実行する) |
 | Zed | `~/.config/zed/` 配下の settings.json / keymap.json / themes |
+| ccstatusline | `~/.config/ccstatusline/settings.json` |
+| Karabiner-Elements | `~/.config/karabiner`(ディレクトリごと) |
 
 ### zsh プラグイン(初回のみ)
 
@@ -38,13 +40,14 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/dotfiles/zs
 
 ### ツール
 
-ランタイム・CLI ツールは mise を優先して管理する(グローバル設定は `mise/config.toml`、プロジェクトごとのバージョンは各リポジトリの `mise.toml`)。mise で扱えないものだけ Homebrew を使う。
+ランタイム・CLI ツールは mise を優先して管理する(グローバル設定は `mise/config.toml`、プロジェクトごとのバージョンは各リポジトリの `mise.toml`)。mise で扱えないものだけ Homebrew を使い、`Brewfile` に載せる。
 
 ```sh
-brew install mise git peco ghq fzf tig
-brew install --cask ghostty
+brew bundle --file=~/dotfiles/Brewfile
 mise install
 ```
+
+brew で入れたものを増減したら `brew bundle dump --file=~/dotfiles/Brewfile --force` で書き出し直し、vscode / go / cargo / npm の行(各ツール側で管理する)は消してからコミットする。
 
 ### macOS 設定
 
