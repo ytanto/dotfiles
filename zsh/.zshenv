@@ -2,15 +2,6 @@
 # Defines environment variables.
 #
 
-# Ensure that a non-login, non-interactive shell has a defined environment.
-if [[ "$SHLVL" -eq 1 && ! -o LOGIN && -s "${ZDOTDIR:-$HOME}/.zprofile" ]]; then
-  source "${ZDOTDIR:-$HOME}/.zprofile"
-fi
-
-# -------------------------------------------------------
-
-# My configuration
-
 # settings for zsh
 export ZDOTDIR=$HOME/dotfiles/zsh
 
@@ -35,6 +26,12 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 
 # For Android build
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
+
+# アプリが裏で起動するシェル（ログインでない最初の zsh）は .zprofile を読まないので、
+# Homebrew の PATH などをログインシェルと揃えるためにここで読む。ZDOTDIR を決めた後でないと dotfiles 側を読めない
+if [[ "$SHLVL" -eq 1 && ! -o LOGIN && -s "$ZDOTDIR/.zprofile" ]]; then
+  source "$ZDOTDIR/.zprofile"
+fi
 
 # Local-only overrides (not tracked)
 [ -f "$HOME/.zshenv.local" ] && source "$HOME/.zshenv.local"
