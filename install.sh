@@ -44,6 +44,10 @@ link ghostty/config "$HOME/Library/Application Support/com.mitchellh.ghostty/con
 
 link herdr/config.toml "$HOME/.config/herdr/config.toml"
 link mise/config.toml "$HOME/.config/mise/config.toml"
+link ccstatusline/settings.json "$HOME/.config/ccstatusline/settings.json"
+
+# Karabiner は設定ファイルを置き換えて保存しファイル単位の symlink を壊すため、ディレクトリごとリンクする
+link karabiner "$HOME/.config/karabiner"
 
 link zed/settings.json "$HOME/.config/zed/settings.json"
 link zed/keymap.json "$HOME/.config/zed/keymap.json"
