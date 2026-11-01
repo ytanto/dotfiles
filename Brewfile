@@ -1,5 +1,4 @@
 tap "btwld/fvm", "https://github.com/btwld/homebrew-fvm.git"
-tap "wix-incubator/brew", "https://github.com/wix-incubator/homebrew-brew.git"
 # Easiest way to build and release mobile apps
 brew "fastlane"
 # Dependency manager for Cocoa projects
