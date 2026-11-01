@@ -98,7 +98,7 @@
     "expo-deployment@expo-plugins": false,
     "code-simplifier@claude-plugins-official": false,
     "playwright-cli@playwright-cli": false,
-    "ruby-lsp@claude-plugins-official": true,
+    "ruby-lsp@claude-plugins-official": false,
     "security-guidance@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "figma@claude-plugins-official": true,
