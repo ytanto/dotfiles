@@ -1,0 +1,10 @@
+.claude/settings.local.json
+.DS_Store
+*code-workspace
+.playwright-cli
+# Docker Compose のローカル上書き（個人環境の絶対パスを含むためコミットしない）
+docker-compose.override.yml
+compose.override.yml
+
+# worktree のコードでテストやサーバーを動かすためのローカル compose
+docker-compose.worktree.yml
