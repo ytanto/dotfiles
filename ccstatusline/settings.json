@@ -5,7 +5,8 @@
       {
         "id": "1",
         "type": "model",
-        "color": "cyan"
+        "color": "cyan",
+        "rawValue": true
       },
       {
         "id": "2",
@@ -14,7 +15,8 @@
       {
         "id": "3",
         "type": "context-percentage-usable",
-        "color": "brightBlack"
+        "color": "brightBlack",
+        "rawValue": true
       },
       {
         "id": "4",
@@ -40,10 +42,18 @@
       },
       {
         "id": "63119cc5-ea14-417e-98c1-57bae2c0167c",
-        "type": "current-working-dir"
+        "type": "current-working-dir",
+        "rawValue": true
       }
     ],
-    [],
+    [
+      {
+        "id": "8",
+        "type": "claude-session-id",
+        "color": "brightBlack",
+        "rawValue": true
+      }
+    ],
     []
   ],
   "flexMode": "full-minus-40",
