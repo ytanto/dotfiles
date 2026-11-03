@@ -1,7 +1,7 @@
 ---
 name: pr-review-delegate
 description: PR のレビューを別の Claude セッションに任せる。herdr で対象リポジトリのルートに新しいタブを作り、そこで `/pr-review <PR URL>` を起動し、承認待ちになったときと統合報告が出たときに知らせるまで見守る。「別セッションでこの PR レビューして」「新しいタブで pr-review 回して」のように、PR のリンクとともに別セッションでのレビューを頼まれたときに使う。PR のリンクだけでレビューを頼まれたときは pr-review を使う。
-argument-hint: "<PR URL>"
+argument-hint: "<PR URL> [<PR URL>...]"
 ---
 
 # PR のレビューを別セッションに任せる
@@ -23,9 +23,21 @@ argument-hint: "<PR URL>"
 
 ### 2. 対象のリポジトリを決める
 
-1. `gh pr view <PR URL> --json number,title,headRefName,baseRefName,headRepository` で PR の情報を取る
+1. `gh pr view <PR URL> --json number,title,body,headRefName,baseRefName` で PR の情報を取る
 2. 手元のクローンを探す。`~/Documents/src` の下で、`git remote get-url origin` が PR のリポジトリと一致するディレクトリを使う（ディレクトリ名がリポジトリ名と違う、改名前の名前のままのことがある）
 3. 見つからない・複数あるときは指示者に聞く
+
+### 2.5. PR が複数なら、セッションの分け方を決める
+
+- **関連する PR は 1 つのセッションにまとめる。** フロントとバックのセットは必ずまとめる（繋ぎ目の API の契約・文言の受け渡しは、両方を見ないとレビューできない）
+  - 関連の目安: 同じ Issue を参照している、本文で互いを参照している、ブランチ名がそろっている、片方の変更をもう片方が使う
+- **関連しない PR は、PR ごとに別のセッションを起動する**（3〜5 を PR の数だけ回す）
+- どちらか迷うときは、根拠を添えて指示者に聞く
+
+まとめるとき:
+- 起動するディレクトリは、変更の起点になる側（フロントとバックならバック、呼び出す側と呼ばれる側なら呼ばれる側）のリポジトリのルートにし、他のリポジトリは `--add-dir` で足す
+- タブ名は `pr-<番号>-<番号>` のように並べる
+- 起動の指示に、すべての PR URL と「関連 PR なので 1 本の統合報告にまとめ、PR 間の繋ぎ目も観点に入れる」ことを書く
 
 ### 3. タブを作って起動する
 
@@ -33,6 +45,7 @@ argument-hint: "<PR URL>"
 2. `herdr tab create --workspace <ID> --label pr-<番号> --cwd <リポジトリの絶対パス> --no-focus`。返ってきた `result.root_pane.pane_id` を控える
 3. `herdr pane run <pane_id> "claude '/pr-review <PR URL>'"`
    - `--remote-control` は付けない
+   - まとめるときは `claude --add-dir <他のリポジトリの絶対パス> '/pr-review <PR URL> <PR URL> 関連 PR なので…'`
    - 指示者から追加の指示（「重くていいから全部見て」など）があれば、PR URL の後ろに続けて書く
 
 ### 4. 起動を確かめて報告する
