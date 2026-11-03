@@ -51,7 +51,13 @@ argument-hint: "<PR URL> [<PR URL>...]"
 
 ### 4. 起動を確かめて報告する
 
-`herdr wait agent-status <pane_id> --status working --timeout 60000` で動き始めたのを確かめ、`herdr pane read <pane_id> --source visible --lines 30` で `/pr-review` が始まっていることを読む。
+`herdr wait agent-status <pane_id> --status working --timeout 60000` で動き始めたのを確かめる。
+
+**スキルが起動したかまで確かめる**（Claude が立ち上がっただけで、入力欄が空のまま・プロンプトがただの文章として扱われている、ということがある）。1〜2 分おいて `herdr agent read <pane_id> --source recent --lines 200` で読み、次がそろっていれば起動している:
+- 入力欄に `❯ /pr-review <PR URL>…` が載っている
+- `pr-review` の手順どおり、PR の情報の取得 → `references.local/` の読み込み → 規模の見積もり → worktree の作成、と進んでいる
+
+そろっていなければ、画面の内容を伝えて指示者の判断を待つ。
 
 報告: ワークスペース名・タブ名・ディレクトリ・PR のタイトル。
 
