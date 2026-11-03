@@ -36,16 +36,17 @@ argument-hint: "<PR URL> [<PR URL>...]"
 
 まとめるとき:
 - 起動するディレクトリは、変更の起点になる側（フロントとバックならバック、呼び出す側と呼ばれる側なら呼ばれる側）のリポジトリのルートにし、他のリポジトリは `--add-dir` で足す
-- タブ名は `pr-<番号>-<番号>` のように並べる
 - 起動の指示に、すべての PR URL と「関連 PR なので 1 本の統合報告にまとめ、PR 間の繋ぎ目も観点に入れる」ことを書く
 
 ### 3. タブを作って起動する
 
 1. `herdr workspace list` のラベルから、リポジトリに合うワークスペースを選ぶ。合うものが無ければ指示者に聞く
-2. `herdr tab create --workspace <ID> --label pr-<番号> --cwd <リポジトリの絶対パス> --no-focus`。返ってきた `result.root_pane.pane_id` を控える
+2. `herdr tab create --workspace <ID> --label <タブ名> --cwd <リポジトリの絶対パス> --no-focus`。返ってきた `result.root_pane.pane_id` を控える
+   - タブ名は PR の中身を日本語 6 文字以内に要約する（例: `ログイン文言`）。PR 番号は使わない（サイドバーで何のレビューか分からない）
 3. `herdr pane run <pane_id> "claude '/pr-review <PR URL>'"`
    - `--remote-control` は付けない
-   - まとめるときは `claude --add-dir <他のリポジトリの絶対パス> '/pr-review <PR URL> <PR URL> 関連 PR なので…'`
+   - まとめるときは `claude '/pr-review <PR URL> <PR URL> 関連 PR なので…' --add-dir <他のリポジトリの絶対パス> ...`
+   - **プロンプトは `--add-dir` より前に置く。** `--add-dir` は値を複数取るので、後ろに置いたプロンプトまでディレクトリとして読まれ、空のプロンプトで立ち上がる
    - 指示者から追加の指示（「重くていいから全部見て」など）があれば、PR URL の後ろに続けて書く
 
 ### 4. 起動を確かめて報告する
