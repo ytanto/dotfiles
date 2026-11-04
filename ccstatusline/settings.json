@@ -9,6 +9,16 @@
         "rawValue": true
       },
       {
+        "id": "9",
+        "type": "separator"
+      },
+      {
+        "id": "10",
+        "type": "thinking-effort",
+        "color": "green",
+        "rawValue": true
+      },
+      {
         "id": "2",
         "type": "separator"
       },
