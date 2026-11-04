@@ -45,9 +45,10 @@ argument-hint: "<PR URL> [<PR URL>...]"
 1. `herdr workspace list` のラベルから、リポジトリに合うワークスペースを選ぶ。合うものが無ければ指示者に聞く
 2. `herdr tab create --workspace <ID> --label <タブ名> --cwd <リポジトリの絶対パス> --no-focus`。返ってきた `result.root_pane.pane_id` を控える
    - タブ名は PR の中身を日本語 6 文字以内に要約する（例: `ログイン文言`）。PR 番号は使わない（サイドバーで何のレビューか分からない）
-3. `herdr pane run <pane_id> "claude '/pr-review <PR URL>'"`
+3. `herdr pane run <pane_id> "claude -n <タブ名> '/pr-review <PR URL>'"`
+   - `-n` でセッションの表示名をタブ名とそろえる（タブを閉じたあとも `/resume` の一覧でどのレビューか分かる）
    - `--remote-control` は付けない
-   - まとめるときは `claude '/pr-review <PR URL> <PR URL> 関連 PR なので…' --add-dir <他のリポジトリの絶対パス> ...`
+   - まとめるときは `claude -n <タブ名> '/pr-review <PR URL> <PR URL> 関連 PR なので…' --add-dir <他のリポジトリの絶対パス> ...`
    - **プロンプトは `--add-dir` より前に置く。** `--add-dir` は値を複数取るので、後ろに置いたプロンプトまでディレクトリとして読まれ、空のプロンプトで立ち上がる
    - 指示者から追加の指示（「重くていいから全部見て」など）があれば、PR URL の後ろに続けて書く
 
