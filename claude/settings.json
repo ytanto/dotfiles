@@ -100,7 +100,7 @@
     "playwright-cli@playwright-cli": false,
     "ruby-lsp@claude-plugins-official": false,
     "security-guidance@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": false,
     "figma@claude-plugins-official": true,
     "crosslog@crosslog-plugins": true,
     "swift-lsp@claude-plugins-official": false,
