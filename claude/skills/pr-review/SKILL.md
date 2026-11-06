@@ -242,7 +242,7 @@ Find の観点別レビュアーも Screen / Verify / Challenge の各レンズ�
 export const meta = {
   name: 'pr-review',
   description: 'PR の所見を観点別に出し、レンズで敵対的に検証する',
-  phases: [{ title: 'Find' }, { title: 'Screen' }, { title: 'Verify' }, { title: 'Challenge' }],
+  phases: [{ title: 'Find' }, { title: 'Screen', model: 'sonnet' }, { title: 'Verify', model: 'sonnet' }, { title: 'Challenge' }],
 }
 
 phase('Find')
@@ -254,14 +254,16 @@ const found = (await parallel(args.finders.map(f => () =>
 const items = split(found).filter(hasRealImpact)
 
 const verified = await pipeline(items,
+  // Screen / Verify は全体の体数の大半を占めるので Sonnet にする。
+  // 所見の入口（Find）と反証（Challenge）は精度が要るのでセッションのモデルのまま
   // Screen: legacy を1枚だけ流す
-  f => agent(legacyPrompt(f), { phase: 'Screen', label: `legacy:${f.file}`, schema: VERDICT })
+  f => agent(legacyPrompt(f), { phase: 'Screen', label: `legacy:${f.file}`, schema: VERDICT, model: 'sonnet' })
          .then(v => ({ f, votes: [v] })),
   // Verify: 一次資料で「既存」が確定し、かつ実害が High 級でなければ2レンズを省く
   r => (r.votes[0].verdict === 'REFUTED' && r.votes[0].isPreExisting && r.f.claimed_severity !== 'High')
     ? r
     : parallel(['reachability', 'impact'].map(lens => () =>
-        agent(lensPrompt(lens, r.f), { phase: 'Verify', label: `${lens}:${r.f.file}`, schema: VERDICT })))
+        agent(lensPrompt(lens, r.f), { phase: 'Verify', label: `${lens}:${r.f.file}`, schema: VERDICT, model: 'sonnet' })))
         .then(vs => ({ ...r, votes: r.votes.concat(vs.filter(Boolean)) })),
   // Challenge: High 候補に red、実害 High 級なのに潰されたものに green
   r => {
