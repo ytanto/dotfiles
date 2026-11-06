@@ -135,6 +135,20 @@
   "remoteControlAtStartup": false,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
+  "autoMode": {
+    "environment": [
+      "$defaults",
+      "Organization: CrossLog. Primary use: software development",
+      "Source control: github.com/crossloglife and all repos under it",
+      "Repository visibility: github.com/ytanto/dotfiles is personal and PUBLIC; never put company information there",
+      "Cloud provider(s): Google Cloud Platform"
+    ],
+    "soft_deny": [
+      "$defaults",
+      "Deleting a GCP project requires the user to name the project explicitly",
+      "Dropping a database requires the user to name the database explicitly"
+    ]
+  },
   "voiceEnabled": true,
   "autoUpdates": true
 }
