@@ -26,7 +26,7 @@ argument-hint: "<PR URL> [<PR URL>...]"
 ### 2. 対象のリポジトリを決める
 
 1. `gh pr view <PR URL> --json number,title,body,headRefName,baseRefName` で PR の情報を取る
-2. 手元のクローンを探す。`~/Documents/src` の下で、`git remote get-url origin` が PR のリポジトリと一致するディレクトリを使う（ディレクトリ名がリポジトリ名と違う、改名前の名前のままのことがある）
+2. 手元のクローンを探す。`~/src` の下で、`git remote get-url origin` が PR のリポジトリと一致するディレクトリを使う（ディレクトリ名がリポジトリ名と違う、改名前の名前のままのことがある）
 3. 見つからない・複数あるときは指示者に聞く
 
 ### 2.5. PR が複数なら、セッションの分け方を決める

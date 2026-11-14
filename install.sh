@@ -60,7 +60,7 @@ if [ ! -f "$DOTFILES/git/.gitconfig.local" ]; then
 	name =
 	email =
 [ghq]
-	root = ~/Documents/src
+	root = ~/src
 EOF
   echo "init: git/.gitconfig.local を作成した。user 設定を記入すること"
 fi
