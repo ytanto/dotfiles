@@ -2,11 +2,27 @@
 
 ## セットアップ
 
+新しい Mac では次の順に進める。`install.sh` は mise があるときだけ `mise trust` を実行し、コミット前の検査は mise で入れる gitleaks を使うので、`brew bundle` を先に済ませる。
+
 ```sh
+# 1. Homebrew
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 2. dotfiles と、Brewfile のツール・アプリ
 git clone https://github.com/ytanto/dotfiles.git ~/dotfiles
-cd ~/dotfiles
-./install.sh
+brew bundle --file=~/dotfiles/Brewfile
+
+# 3. シンボリックリンク（Karabiner-Elements はこの後で初めて起動する）
+~/dotfiles/install.sh
+
+# 4. mise のランタイム・CLI
+mise install
+
+# 5. Claude Code（公式インストーラーが ~/.local/bin に入れる）
+curl -fsSL https://claude.ai/install.sh | bash
 ```
+
+Karabiner-Elements を `install.sh` より先に起動すると、`~/.config/karabiner` が実体のディレクトリとして作られ、リンクを張れない（`WARN` が出る）。その場合は中身を確かめてから消し、`install.sh` を流し直す。
 
 `install.sh` はシンボリックリンクを冪等に張る。既存の実体ファイルや別の場所を指すリンクは上書きせず警告するので、警告が出たら内容を確認して手で解消する(リンク外れによる設定の二重管理の検出も兼ねているため、定期的に再実行してよい)。
 
@@ -37,12 +53,16 @@ cd ~/dotfiles
 
 ランタイム・CLI ツールは mise を優先して管理する(グローバル設定は `mise/config.toml`、プロジェクトごとのバージョンは各リポジトリの `mise.toml`)。mise で扱えないものだけ Homebrew を使い、`Brewfile` に載せる。
 
-```sh
-brew bundle --file=~/dotfiles/Brewfile
-mise install
-```
-
 brew で入れたものを増減したら `brew bundle dump --file=~/dotfiles/Brewfile --force` で書き出し直し、vscode / go / cargo / npm の行(各ツール側で管理する)は消してからコミットする。
+
+### 外部のスキル
+
+dotfiles で管理する `claude/skills/` のほかに、公開されているスキルを `~/.agents/skills/` に入れて使っている（`npx skills` が入れ、`~/.claude/skills/` からリンクする）。
+
+```sh
+npx skills add vercel-labs/skills   # find-skills を選ぶ
+npx skills add ogulcancelik/herdr   # herdr の公式スキル
+```
 
 ### macOS 設定
 
