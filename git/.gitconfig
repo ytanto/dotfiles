@@ -31,6 +31,8 @@
 	conflictstyle = zdiff3
 [diff]
 	algorithm = histogram
+[ghq]
+	root = ~/src
 # マシンローカルの設定で本体の値を上書きできるよう、最後に読む
 [include]
 	path = ~/dotfiles/git/.gitconfig.local
