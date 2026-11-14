@@ -17,8 +17,6 @@ brew "ghq"
 brew "git"
 # Agent multiplexer that lives in your terminal
 brew "herdr"
-# Improved top (interactive process viewer)
-brew "htop"
 # Tools and libraries to manipulate images in select formats
 brew "imagemagick"
 # Lightweight and flexible command-line JSON processor
@@ -27,26 +25,12 @@ brew "jq"
 brew "mise"
 # Open source relational database management system
 brew "mysql-client"
-# Network Kanji code conversion Filter (NKF)
-brew "nkf"
-# PDF converter to SVG
-brew "pdf2svg"
-# Draw UML diagrams
-brew "plantuml"
 # Monitor data's progress through a pipe
 brew "pv"
 # Search tool like grep and The Silver Searcher
 brew "ripgrep"
-# SOcket CAT: netcat on steroids
-brew "socat"
-# Text interface for Git repositories
-brew "tig"
-# Executes a program periodically, showing output fullscreen
-brew "watch"
 # Watch files and take action when they change
 brew "watchman"
-# Internet file retriever
-brew "wget"
 # Fish-like autosuggestions for zsh
 brew "zsh-autosuggestions"
 # Fish shell like syntax highlighting for zsh
@@ -59,10 +43,7 @@ cask "docker-desktop"
 cask "fork"
 cask "gcloud-cli"
 cask "ghostty"
-cask "graphiql"
-cask "ngrok"
 cask "postman"
-cask "redis-insight"
 cask "tableplus"
 cask "zed"
 cask "zulu@17"

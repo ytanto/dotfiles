@@ -1,9 +1,6 @@
 [tools]
 node = "lts"
 "npm:firebase-tools" = "latest"
-"npm:netlify-cli" = "latest"
 "npm:ccstatusline" = "latest"
 python = "3.12"
 gitleaks = "latest"
-rust = "stable"
-go = "latest"
