@@ -20,7 +20,6 @@ path=(
   /opt/homebrew/{bin,sbin}
   /usr/local/{bin,sbin}
   $path
-  $HOME/.maestro/bin
 )
 
 # Mouse-wheel scrolling has been disabled by -X (disable screen clearing).
