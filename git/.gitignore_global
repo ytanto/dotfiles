@@ -8,3 +8,5 @@ compose.override.yml
 
 # worktree のコードでテストやサーバーを動かすためのローカル compose
 docker-compose.worktree.yml
+
+**/.claude/settings.local.json
