@@ -83,8 +83,7 @@
   },
   "model": "opus",
   "skillOverrides": {
-    "herdr": "off",
-    "grill-me": "off"
+    "herdr": "off"
   },
   "statusLine": {
     "type": "command",
