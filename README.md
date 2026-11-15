@@ -60,10 +60,10 @@ brew で入れたものを増減したら `brew bundle dump --file=~/dotfiles/Br
 
 ### 外部のスキル
 
-dotfiles で管理する `claude/skills/` のほかに、公開されているスキルを `~/.agents/skills/` に入れて使っている（`npx skills` が入れ、`~/.claude/skills/` からリンクする）。
+dotfiles で管理する `claude/skills/` のほかに、公開されているスキルを `~/.agents/skills/` に入れて使っている（`npx skills` が入れ、`~/.claude/skills/` からリンクする）。選ぶ画面では、エージェントに Claude Code を含める（含めないと `~/.claude/skills/` からのリンクが張られない）。
 
 ```sh
-npx skills add ogulcancelik/herdr   # herdr の公式スキル（herdr-workspace のスキルが参照する）
+npx skills add herdrdev/herdr   # herdr の公式スキル（herdr-workspace のスキルが参照する）。選ぶのは herdr だけ
 ```
 
 ### macOS 設定
