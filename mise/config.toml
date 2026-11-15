@@ -4,3 +4,5 @@ node = "lts"
 "npm:ccstatusline" = "latest"
 python = "3.12"
 gitleaks = "latest"
+# bin/ の uv run --script で書いたスクリプトを動かすため
+uv = "latest"

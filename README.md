@@ -7,6 +7,8 @@
 ```sh
 # 1. Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# 今のシェルだけで brew を使えるようにする（~/.zprofile には書かない。PATH は install.sh の後に dotfiles の .zprofile が通す）
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # 2. dotfiles と、Brewfile のツール・アプリ
 git clone https://github.com/ytanto/dotfiles.git ~/dotfiles
@@ -14,6 +16,7 @@ brew bundle --file=~/dotfiles/Brewfile
 
 # 3. シンボリックリンク（Karabiner-Elements はこの後で初めて起動する）
 ~/dotfiles/install.sh
+# ここでターミナルを開き直す（dotfiles の .zshenv・.zprofile を読み込ませるため）
 
 # 4. mise のランタイム・CLI
 mise install
