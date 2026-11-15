@@ -55,7 +55,7 @@ argument-hint: "<PR URL> [<PR URL>...]"
 
 ### 4. 起動を確かめて報告する
 
-`herdr wait agent-status <pane_id> --status working --timeout 60000` で動き始めたのを確かめる。
+`herdr agent wait <pane_id> --until working --timeout 60000` で動き始めたのを確かめる。
 
 **スキルが起動したかまで確かめる**（Claude が立ち上がっただけで、入力欄が空のまま・プロンプトがただの文章として扱われている、ということがある）。1〜2 分おいて `herdr agent read <pane_id> --source recent --lines 200` で読み、次がそろっていれば起動している:
 - 入力欄に `❯ /pr-review <PR URL>…` が載っている

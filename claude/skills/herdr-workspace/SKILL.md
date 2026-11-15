@@ -23,14 +23,14 @@ herdr の CLI は、動いている herdr にソケット経由でつながる�
 2. **先にタブを作る**: `herdr tab create --workspace <ID> --label <名前> --cwd <リポジトリの絶対パス> --no-focus`。返ってきた `result.root_pane.pane_id` を控える
 3. そのペインで起動する: `herdr pane run <pane_id> "claude --remote-control <名前>"`
    - 最初の指示があるときは後ろに足す: `claude --remote-control <名前> "<指示>"`。指示には背景と目的を書く（会話は引き継がれない）
-4. 起動を待って画面を読む: `herdr wait output <pane_id> --match "remote-control is active" --timeout 30000` → `herdr pane read <pane_id> --source visible --lines 30`
+4. 起動を待って画面を読む: `herdr pane wait-output <pane_id> --match "remote-control is active" --timeout 30000` → `herdr pane read <pane_id> --source visible --lines 30`
 5. 報告する: タブの場所（ワークスペース名・タブ名）、ディレクトリ、画面に出た `https://claude.ai/code/session_…` の URL
 
 **`herdr agent start` は使わない。** タブを指定しないと、ワークスペースで開いているタブ（ユーザーの別作業のタブのこともある）にペインとして足される。
 
 ## worktree とタブをまとめて作る
 
-`herdr worktree create --cwd <リポジトリ> --branch <ブランチ> --base <元のブランチ> --label <名前> --no-focus --json` で、worktree とそのタブができる。返ってきた JSON からペインとパスを控え、セッションが要るなら上の 3 から続ける。
+`herdr worktree create --cwd <リポジトリ> --branch <ブランチ> --base <元のブランチ> --label <名前> --no-focus` で、worktree とそのタブができる。返ってきた結果からペインとパスを控え、セッションが要るなら上の 3 から続ける。
 
 リポジトリに worktree の決まり（CLAUDE.md・worktree 用のスキル）があれば、そちらのセットアップ手順（依存の入れ方・.env の扱い）に従う。
 
@@ -38,7 +38,7 @@ herdr の CLI は、動いている herdr にソケット経由でつながる�
 
 1. 自分のペインの横に分ける: `herdr pane split --current --direction right --cwd <ディレクトリ> --no-focus`。新しいペインは `result.pane.pane_id`
 2. コマンドを流す: `herdr pane run <pane_id> "<起動コマンド>"`
-3. 準備ができるまで待つ: `herdr wait output <pane_id> --match "<起動完了の文字>" --timeout <ミリ秒>`
+3. 準備ができるまで待つ: `herdr pane wait-output <pane_id> --match "<起動完了の文字>" --timeout <ミリ秒>`
 4. エラーを見るときは `herdr pane read <pane_id> --source recent --lines 80`
 
 起動前のポートの確認など、リポジトリ側のサーバー起動の決まりがあればそれに従う。
