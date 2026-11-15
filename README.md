@@ -63,8 +63,7 @@ brew で入れたものを増減したら `brew bundle dump --file=~/dotfiles/Br
 dotfiles で管理する `claude/skills/` のほかに、公開されているスキルを `~/.agents/skills/` に入れて使っている（`npx skills` が入れ、`~/.claude/skills/` からリンクする）。
 
 ```sh
-npx skills add vercel-labs/skills   # find-skills を選ぶ
-npx skills add ogulcancelik/herdr   # herdr の公式スキル
+npx skills add ogulcancelik/herdr   # herdr の公式スキル（herdr-workspace のスキルが参照する）
 ```
 
 ### macOS 設定

@@ -83,7 +83,6 @@
   },
   "model": "opus",
   "skillOverrides": {
-    "find-skills": "off",
     "herdr": "off",
     "grill-me": "off"
   },
