@@ -7,3 +7,4 @@ gitleaks = "latest"
 # bin/ の uv run --script で書いたスクリプトを動かすため
 uv = "latest"
 "github:herdrdev/herdr" = "0.8.2"
+cloud-sql-proxy = "2"
