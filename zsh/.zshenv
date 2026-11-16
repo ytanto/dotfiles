@@ -17,6 +17,9 @@ export PATH=/usr/local/bin:$PATH
 # dotfiles 管理の自作スクリプト。実体をそのまま PATH に載せ、symlink 管理を挟まない
 export PATH=$HOME/dotfiles/bin:$PATH
 
+# 公開リポジトリに置けない（社内の接続先などを含む）自作スクリプトの置き場
+export PATH=$HOME/bin:$PATH
+
 # settings for Android Studio
 export ANDROID_HOME=$HOME/Library/Android/sdk
 export PATH=$PATH:$ANDROID_HOME/emulator
