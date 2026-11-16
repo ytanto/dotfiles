@@ -34,5 +34,8 @@ if [[ "$SHLVL" -eq 1 && ! -o LOGIN && -s "$ZDOTDIR/.zprofile" ]]; then
   source "$ZDOTDIR/.zprofile"
 fi
 
+# Playwright MCP に STG の Basic 認証とログイン用の secrets を渡す。認証情報は公開できないので dotfiles の外に置く
+export PLAYWRIGHT_MCP_CONFIG=$HOME/.config/playwright-mcp/config.json
+
 # Local-only overrides (not tracked)
 [ -f "$HOME/.zshenv.local" ] && source "$HOME/.zshenv.local"

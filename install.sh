@@ -35,6 +35,8 @@ link git/.gitconfig "$HOME/.gitconfig"
 link claude/CLAUDE.md "$HOME/.claude/CLAUDE.md"
 link claude/settings.json "$HOME/.claude/settings.json"
 link claude/keybindings.json "$HOME/.claude/keybindings.json"
+# 公開しないルールは *.local.md にして .gitignore で外す（この Mac にだけ残る）
+link claude/rules "$HOME/.claude/rules"
 for skill in "$DOTFILES"/claude/skills/*/; do
   link "claude/skills/$(basename "$skill")" "$HOME/.claude/skills/$(basename "$skill")"
 done
