@@ -61,6 +61,7 @@
       "Read(~/.ssh/**)",
       "Read(~/.zshenv.local)",
       "Read(~/.config/gmail-fetch/**)",
+      "Read(~/.config/playwright-mcp/**)",
       "Read(~/.config/gspread/**)",
       "Read(~/.config/gcloud/**)",
       "Read(~/.config/gh/hosts.yml)",
@@ -75,6 +76,7 @@
       "Read(**/*google-service-account-key*)",
       "Edit(.env*)",
       "Edit(**/secrets/**)",
+      "Edit(~/.config/playwright-mcp/**)",
       "Bash(psql *)",
       "Bash(mysql *)"
     ],
