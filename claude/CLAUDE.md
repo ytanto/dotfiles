@@ -66,7 +66,7 @@
 
 ## 承認を求められた原因を取り違えない
 
-- コマンドが承認待ちになったら、まず `~/.claude/settings.json` の **`permissions.ask` ルール**を疑うこと。`defaultMode` は `auto` で、許可リストに無い通常のコマンド（`git commit` / `docker compose` / `gh pr create` 等）は無承認で通る。**「許可リストが足りない」という診断はほぼ誤り**で、許可リストへの追加を提案しても解決しない
+- コマンドが承認待ちになったら、まず **`permissions.ask` ルール**を疑うこと。個人の `~/.claude/settings.json` だけでなく、作業中のリポジトリにコミットされた `.claude/settings.json`（チーム共有）にも `ask` があり、`cd` で別のリポジトリを触っていてもセッションを始めたリポジトリの設定が効く。`ask` は `allow` より優先されるので、個人の設定に `allow` を足しても外れない。`defaultMode` は `auto` で、許可リストに無い通常のコマンド（`git commit` / `docker compose` / `gh pr create` 等）は無承認で通る。**「許可リストが足りない」という診断はほぼ誤り**で、許可リストへの追加を提案しても解決しない
 - `~/.claude/settings.json` は `~/dotfiles/claude/settings.json` へのシンボリックリンク。**設定を直すときは実体（dotfiles 側）を編集する**。リンクが外れて実体が二重化していると、dotfiles 側の変更が効かないまま古い設定が生き続けるので、挙動が設定と食い違うときはリンクの有無を確認する
 
 ## CrossLog デザインガイドライン（サービス横断）
