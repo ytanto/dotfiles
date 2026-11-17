@@ -25,6 +25,8 @@ brew "jq"
 brew "mise"
 # Open source relational database management system
 brew "mysql-client"
+# PDF rendering library (based on the xpdf-3.0 code base)
+brew "poppler"
 # Monitor data's progress through a pipe
 brew "pv"
 # Search tool like grep and The Silver Searcher
