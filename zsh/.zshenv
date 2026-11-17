@@ -36,6 +36,9 @@ fi
 
 # Playwright MCP に STG の Basic 認証とログイン用の secrets を渡す。認証情報は公開できないので dotfiles の外に置く
 export PLAYWRIGHT_MCP_CONFIG=$HOME/.config/playwright-mcp/config.json
+# 操作の流れは見ないので、窓が前に出て作業を邪魔しないようにする。設定ファイルは秘密を含むので環境変数で上書きする。
+# 人の操作が要る認証のときに起動時の指定で窓を出せるよう、既に値があれば残す（.zshenv は子の zsh でも読まれるため）
+export PLAYWRIGHT_MCP_HEADLESS=${PLAYWRIGHT_MCP_HEADLESS:-true}
 
 # Local-only overrides (not tracked)
 [ -f "$HOME/.zshenv.local" ] && source "$HOME/.zshenv.local"

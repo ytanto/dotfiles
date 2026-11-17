@@ -73,6 +73,12 @@
 
 - UI実装・UI文言決定・Figma 落とし込みの時は crosslog リポジトリの `docs/design-guidelines/README.md` を読み、そこに書かれたファイル構成に従って必要なものだけ参照（作業対象プロダクトのDSのみ・他プロダクトDSは読まない）
 
+## Playwright MCP はヘッドレスで動く
+
+- 既定はヘッドレス（`.zshenv` の `PLAYWRIGHT_MCP_HEADLESS`）。窓は出さない
+- パスキーなど人の操作が要る認証は、指示者に Touch ID を頼まず、仮想の認証器（CDP の `WebAuthn`）で通す。通せないときは止めて報告する
+- ヘッドレスでは UA に `HeadlessChrome` が入る。UA で画面を切り替えるアプリでスマホの画面を確かめるときは、UA を明示する
+
 ## E2E テストでのメール検証（gmail-fetch）
 
 - 実際に届いたメールを確認するときは `gmail-fetch` を使う（実体は `~/dotfiles/bin/gmail-fetch`）
