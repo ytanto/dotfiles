@@ -6,7 +6,7 @@ import { v_flex, h_flex } from "gpui-base";
 import { agents, panes, run, theme, hc, exec, home, readTextFile, watchFolder, setBadge, notify, checking, nextCommand } from "herdr";
 import {
   readPending, readTaskFiles, currentPlan, prLinks, parseDialog, samePage,
-  projectDir, taskDir, TAIL_ARGS, PR_PATTERN,
+  projectDir, taskDir, TAIL_ARGS, PR_ROWS,
 } from "./transcript.js";
 
 const ORDER = { blocked: 0, done: 1, working: 2, idle: 3 };
@@ -128,8 +128,8 @@ export default class Inbox extends View {
         entry.choices = p.choices;
         entry.logTasks = p.tasks;
       }
-      // PRs can come up anywhere in a session, so this reads the whole transcript (grep is fast).
-      const prs = await exec("/usr/bin/grep", ["-o", "-E", PR_PATTERN, entry.path]);
+      // PRs can come up anywhere in a session, so this reads the whole transcript (perl is fast).
+      const prs = await exec("/usr/bin/perl", ["-ne", PR_ROWS, entry.path]);
       entry.prs = prLinks(prs.stdout);
     } catch (e) {
       console.log(`inbox: parse ${entry.path}: ${e}`);

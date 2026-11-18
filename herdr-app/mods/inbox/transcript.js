@@ -5,7 +5,12 @@ const TAIL_BYTES = 1500000;
 
 export const TAIL_ARGS = (path) => ["-c", String(TAIL_BYTES), path];
 
-export const PR_PATTERN = "https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]+";
+const PR_PATTERN = "https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]+";
+
+// A perl filter for the rows prLinks can use. Tool results and copies of API requests can be megabytes
+// each and never count, so they're dropped before the app has to parse them. Quotes inside text are
+// escaped in JSON, so these bare keys match only the row's own fields.
+export const PR_ROWS = `print if m{${PR_PATTERN}} && /"role":"(?:user|assistant)"/ && !/"type":"(?:tool_result|api-request-blob)"/`;
 
 // Claude Code names a project folder after its cwd with every non-alphanumeric character as "-".
 export const projectDir = (home, cwd) => `${home}/.claude/projects/${cwd.replace(/[^A-Za-z0-9]/g, "-")}`;
@@ -184,13 +189,32 @@ export function currentPlan(tasks) {
   return { goal, steps, done: steps.filter((t) => t.status === "completed").length };
 }
 
-// Unique PR URLs from grep -o output, newest mention first.
-export function prLinks(grepOutput) {
-  const seen = [];
-  for (const url of grepOutput.split("\n").map((s) => s.trim()).filter(Boolean).reverse()) {
-    if (!seen.includes(url)) seen.push(url);
+// User rows that start with these come from the app or another session, not from the person.
+const NOT_SPOKEN = /^\s*<(?:hc|task-notification|system-reminder|local-command-(?:caveat|stdout|stderr)|bash-(?:stdout|stderr))[\s>]/;
+
+// What Claude wrote and what the person said. A PR that only showed up in a tool's output (another
+// session's screen, a gh listing, a skill's example) isn't one this session took up.
+function spokenTexts(row) {
+  if (row.isMeta || row.isSidechain || row.isCompactSummary) return [];
+  const c = row.message?.content;
+  const texts = (blocks) => blocks.filter((b) => b?.type === "text" && typeof b.text === "string").map((b) => b.text);
+  if (row.type === "assistant") return Array.isArray(c) ? texts(c) : [];
+  if (row.type !== "user") return [];
+  if (typeof c === "string") return NOT_SPOKEN.test(c) ? [] : [c];
+  if (!Array.isArray(c) || c.some((b) => b?.type === "tool_result")) return [];
+  return texts(c).filter((s) => !NOT_SPOKEN.test(s));
+}
+
+// Unique PR URLs from transcript rows, newest mention first.
+export function prLinks(rows) {
+  const urls = [];
+  for (const line of rows.split("\n")) {
+    if (!line.startsWith("{")) continue;
+    let row;
+    try { row = JSON.parse(line); } catch { continue; }
+    for (const s of spokenTexts(row)) urls.push(...(s.match(new RegExp(PR_PATTERN, "g")) ?? []));
   }
-  return seen;
+  return [...new Set(urls.reverse())];
 }
 
 // Claude Code's question dialog, read from the bottom of the screen. Text further up is conversation,
