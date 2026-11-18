@@ -24,18 +24,42 @@ function isHumanTurn(row) {
   return Array.isArray(c) && c.length > 0 && !c.some((b) => b?.type === "tool_result");
 }
 
+const RECOMMENDED = /\s*[（(]おすすめ[）)]\s*/;
+
+// The readable form: "1. ボタンの文字（おすすめ）: 送る文" and an indented "理由: …" under it.
+function parseNumberedNext(body) {
+  const items = [];
+  for (const line of body.split("\n")) {
+    const head = /^\s*\d+[.．]\s*(.+)$/.exec(line);
+    const why = /^\s+理由\s*[:：]\s*(.+)$/.exec(line);
+    if (head) {
+      const at = head[1].search(/:\s|：/);
+      if (at < 0) continue;
+      const label = head[1].slice(0, at);
+      const prompt = head[1].slice(at + 1).trim();
+      if (!prompt) continue;
+      items.push({ label: label.replace(RECOMMENDED, "").trim(), prompt, reason: null, recommended: RECOMMENDED.test(label) });
+    } else if (why && items.length) {
+      items[items.length - 1].reason = why[1].trim();
+    }
+  }
+  return items;
+}
+
+// Sessions started under the earlier rules still write a JSON array, so both forms are read.
 function parseNext(text) {
   let last = null;
   for (const m of text.matchAll(NEXT_BLOCK)) last = m[1];
   if (last == null) return null;
+  let items;
   try {
-    const items = JSON.parse(last);
-    if (!Array.isArray(items)) return null;
-    const ok = items.filter((i) => typeof i?.label === "string" && typeof i?.prompt === "string" && i.prompt.trim());
-    return ok.length ? ok : null;
+    const json = JSON.parse(last);
+    items = Array.isArray(json) ? json.map((i) => ({ ...i, recommended: false })) : [];
   } catch {
-    return null;
+    items = parseNumberedNext(last);
   }
+  const ok = items.filter((i) => typeof i?.label === "string" && typeof i?.prompt === "string" && i.prompt.trim());
+  return ok.length ? ok : null;
 }
 
 // A choice written as prose: "A：…", "- **A（おすすめ）：** …", "1. …", "B) …".
@@ -113,7 +137,7 @@ function replayTasks(row, calls, tasks) {
   }
 }
 
-// { next: [{label, prompt, reason}] | null, choices: [{key, text, recommended}] | null, tasks: [...] }.
+// { next: [{label, prompt, reason, recommended}] | null, choices: [{key, text, recommended}] | null, tasks: [...] }.
 // Both proposals count only until the person speaks again. A pending question isn't here: Claude Code
 // writes a tool call to the transcript only once it has a result, so questions come from the screen.
 export function readPending(tail) {

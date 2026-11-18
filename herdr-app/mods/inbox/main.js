@@ -427,7 +427,11 @@ export default class Inbox extends View {
         .child(div().text_size(11).text_color(t.dim).child("次の一手"))
         .children(entry.next.map((n, i) => v_flex()
           .gap(2)
-          .child(h_flex().child(this.button(`next-${a.address}-${i}`, n.label, t, (_e, cx) => this.send(a.address, entry, n.prompt, cx), { primary: i === 0 })))
+          // The earlier JSON form had no mark: its first item was the recommended one.
+          .child(h_flex().gap(6).items_center()
+            .child(this.button(`next-${a.address}-${i}`, `${i + 1}. ${n.label}`, t, (_e, cx) => this.send(a.address, entry, n.prompt, cx),
+              { primary: entry.next.some((x) => x.recommended) ? n.recommended : i === 0 }))
+            .when(Boolean(n.recommended), (el) => el.child(div().text_size(11).text_color(t.accent).child("おすすめ"))))
           .when(Boolean(n.reason), (el) => el.child(div().pl(2).text_size(11).text_color(t.dim).child(n.reason)))))))
       .when(Boolean(entry.prs?.length), (el) => el.child(this.prView(a.address, entry.prs, t)));
   }
