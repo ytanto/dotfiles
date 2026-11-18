@@ -3,7 +3,7 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { agents, panes, run, theme, hc, exec, home, readTextFile, watchFolder, setBadge, notify, checking, nextCommand } from "herdr";
+import { agents, panes, spaces, run, theme, hc, exec, home, readTextFile, watchFolder, setBadge, notify, checking, nextCommand } from "herdr";
 import {
   readPending, readTaskFiles, currentPlan, prLinks, parseDialog, samePage,
   projectDir, taskDir, TAIL_ARGS, PR_ROWS,
@@ -14,6 +14,16 @@ const LABEL = { question: "質問", permission: "承認待ち", blocked: "入力
 const MAX_PRS = 5;
 
 const tilde = (p) => (p && p.startsWith(home()) ? "~" + p.slice(home().length) : p ?? "");
+// An unnamed tab goes by its position, which shifts when a tab before it closes; the terminal's own
+// title (a session started with a name sets it) stays with the session. Without a name the title is
+// just the program's, which tells sessions apart no better than the position.
+function place(a) {
+  const tab = spaces().find((s) => s.id === a.space)?.tabs.find((x) => x.id === a.tab);
+  const title = a.title?.trim();
+  const own = title && title !== a.program?.name;
+  return `${a.space_name} / ${tab && !tab.named && own ? title : a.tab_name}`;
+}
+
 const prName = (url) => url.replace(/^https:\/\/github\.com\/([^/]+\/[^/]+)\/pull\/(\d+)$/, "$1 #$2");
 
 function icon(p, size, color) {
@@ -64,7 +74,7 @@ export default class Inbox extends View {
     for (const a of list) {
       const known = this.info.get(a.address);
       const entry = known ?? {};
-      entry.label = `${a.space_name} / ${a.tab_name}`;
+      entry.label = place(a);
       entry.focused = a.focused;
       if (known?.status === a.status) continue;
       const announce = this.started && a.status === "blocked" && !a.focused;
@@ -415,7 +425,7 @@ export default class Inbox extends View {
         .child(div().size(8).rounded(4).flex_none().bg(t[a.status] ?? t.unknown))
         .child(div().text_size(11.5).text_color(t[a.status] ?? t.muted).flex_none().child(kindLabel))
         .child(icon(a.program, 13, t.muted))
-        .child(div().flex_1().min_w(0).truncate().text_size(13).font_semibold().text_color(t.foreground).child(`${a.space_name} / ${a.tab_name}`))
+        .child(div().flex_1().min_w(0).truncate().text_size(13).font_semibold().text_color(t.foreground).child(place(a)))
         .child(this.button(`go-${a.address}`, "移動", t, () => run("agent.focus", { terminal: a.address }))))
       .child(div().truncate().text_size(11.5).text_color(t.dim).child(tilde(pane?.cwd) || a.title))
       .when(Boolean(plan), (el) => el.child(this.planView(plan, t)))
