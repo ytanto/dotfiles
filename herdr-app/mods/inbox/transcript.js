@@ -1,4 +1,4 @@
-// Reads what a Claude Code session is waiting on from its JSONL transcript and screen.
+// Reads what a Claude Code session waits on: its transcript for plans and proposals, its screen for questions.
 
 // Transcripts grow to tens of MB; what's pending always sits at the end, so only the tail is read.
 const TAIL_BYTES = 1500000;
@@ -72,9 +72,9 @@ function replayTasks(row, calls, tasks) {
   }
 }
 
-// { question: {id, questions} | null, next: [{label, prompt, reason}] | null, tasks: [...] }
+// { next: [{label, prompt, reason}] | null, tasks: [...] }. A pending question isn't here: Claude Code
+// writes a tool call to the transcript only once it has a result, so questions come from the screen.
 export function readPending(tail) {
-  const asks = new Map();
   const calls = new Map();
   const tasks = new Map();
   let texts = [];
@@ -90,18 +90,10 @@ export function readPending(tail) {
       continue;
     }
     const content = row.message?.content;
-    if (!Array.isArray(content)) continue;
-    for (const b of content) {
-      if (row.type === "assistant" && b?.type === "text" && typeof b.text === "string") texts.push(b.text);
-      if (row.type === "assistant" && b?.type === "tool_use" && b.name === "AskUserQuestion" && Array.isArray(b.input?.questions)) {
-        asks.set(b.id, { id: b.id, questions: b.input.questions });
-      }
-      if (row.type === "user" && b?.type === "tool_result") asks.delete(b.tool_use_id);
-    }
+    if (row.type !== "assistant" || !Array.isArray(content)) continue;
+    for (const b of content) if (b?.type === "text" && typeof b.text === "string") texts.push(b.text);
   }
-  const pending = [...asks.values()];
   return {
-    question: pending.length ? pending[pending.length - 1] : null,
     next: parseNext(texts.join("\n")),
     tasks: [...tasks.values()].sort((x, y) => Number(x.id) - Number(y.id)),
   };
@@ -133,27 +125,60 @@ export function prLinks(grepOutput) {
   return seen;
 }
 
-// Claude Code's question dialog numbers its options "1. label" ("1. [✔] label" when several can be
-// picked), the cursor's line prefixed with "❯". Only lines below the question count: numbered lists in
-// the conversation above would otherwise match. Null when the question isn't on screen.
-export function screenOptions(screen, question) {
+// Claude Code's question dialog, read from the bottom of the screen. Text further up is conversation,
+// which can quote a question or a numbered list and must never be read as the dialog.
+const DIALOG_LINES = 40;
+const OPTION = /^\s*(?:❯\s*)?(\d+)\.\s+(?:\[(.)\]\s*)?(.*?)\s*$/;
+const RULE = /^\s*─{8,}\s*$/;
+// The tab strip: "☐ 果物" alone, or "←  ☒ 飲み物  ☐ 麺  ✔ Submit  →" with several questions.
+const TAB = /([☐☒])\s+(.+?)(?=\s{2,}|\s*[☐☒✔→]|\s*$)/g;
+
+// { kind: "question", tabs, question, multiSelect, options: [{n, label, description, checked}] }
+// | { kind: "review", tabs, answers: [{question, answer}] } | null when no dialog is up.
+// Options stop before "Type something": free text and "Chat about this" are answered on screen.
+export function parseDialog(screen) {
   const lines = screen.split("\n");
-  const q = question.trim();
-  // A long question wraps, so its first screen line is a prefix of it.
-  const at = lines.findLastIndex((l) => {
-    const s = l.trim();
-    return s.length >= Math.min(q.length, 8) && q.startsWith(s);
-  });
-  if (at < 0) return null;
-  const found = new Map();
-  for (const line of lines.slice(at + 1)) {
-    const m = /^\s*(?:❯\s*)?(\d+)\.\s+(?:\[(.)\]\s*)?(.*?)\s*$/.exec(line);
-    if (m && !found.has(Number(m[1]))) found.set(Number(m[1]), { label: m[3], checked: m[2] != null && m[2] !== " " });
+  while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+  const area = lines.slice(-DIALOG_LINES);
+  const foot = area.findLastIndex((l) => /Enter to select/.test(l));
+  const strip = area.findLastIndex((l, i) => (foot < 0 || i < foot) && /^\s*(←\s+)?[☐☒]\s+\S/.test(l));
+  if (strip < 0) return null;
+  const tabs = [...area[strip].matchAll(TAB)].map((m) => ({ label: m[2].trim(), done: m[1] === "☒" }));
+  const body = area.slice(strip + 1, foot < 0 ? undefined : foot);
+
+  const review = body.findIndex((l) => l.trim() === "Review your answers");
+  if (review >= 0) {
+    const answers = [];
+    for (const l of body.slice(review + 1)) {
+      const q = /^\s*●\s+(.*)$/.exec(l);
+      const a = /^\s*→\s+(.*)$/.exec(l);
+      if (q) answers.push({ question: q[1].trim(), answer: "" });
+      else if (a && answers.length) answers[answers.length - 1].answer = a[1].trim();
+    }
+    const opts = body.slice(review + 1).map((l) => OPTION.exec(l)).filter(Boolean);
+    const ok = opts.length >= 2 && opts[0][1] === "1" && opts[0][3] === "Submit answers" && opts[1][1] === "2" && opts[1][3] === "Cancel";
+    return ok ? { kind: "review", tabs, answers } : null;
   }
-  return found;
+
+  const first = body.findIndex((l) => OPTION.test(l));
+  if (first < 0) return null;
+  const question = body.slice(0, first).map((l) => l.trim()).filter((l) => l && !RULE.test(l)).join("");
+  const options = [];
+  for (const l of body.slice(first)) {
+    const m = OPTION.exec(l);
+    if (m) {
+      if (/^Type something\.?$/.test(m[3])) break;
+      if (Number(m[1]) !== options.length + 1) return null;
+      options.push({ n: Number(m[1]), label: m[3], description: "", checked: m[2] != null && m[2] !== " ", marked: m[2] != null });
+    } else if (l.trim() && !RULE.test(l) && options.length) {
+      const o = options[options.length - 1];
+      o.description = (o.description + l.trim()).trim();
+    }
+  }
+  if (!question || !options.length) return null;
+  return { kind: "question", tabs, question, multiSelect: options.some((o) => o.marked), options };
 }
 
-// The dialog's last page, shown after every question has an answer.
-export function onReview(screen) {
-  return /Review your answers/.test(screen) && /^\s*(?:❯\s*)?1\.\s+Submit answers\s*$/m.test(screen);
-}
+// Same page of the dialog: the keys meant for one page must never land on another.
+export const samePage = (a, b) =>
+  a?.kind === b?.kind && (a?.kind === "review" || (a?.question === b?.question && a.options.length === b.options.length && a.options.every((o, i) => o.label === b.options[i].label)));

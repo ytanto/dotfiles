@@ -5,7 +5,7 @@ import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { agents, panes, run, theme, hc, exec, home, readTextFile, watchFolder, setBadge, notify, checking, nextCommand } from "herdr";
 import {
-  readPending, readTaskFiles, currentPlan, prLinks, screenOptions, onReview,
+  readPending, readTaskFiles, currentPlan, prLinks, parseDialog, samePage,
   projectDir, taskDir, TAIL_ARGS, PR_PATTERN,
 } from "./transcript.js";
 
@@ -24,8 +24,8 @@ function icon(p, size, color) {
 export default class Inbox extends View {
   init(_props, cx) {
     if (!checking()) cx.spawn(async (cx) => { for (;;) this.command(await nextCommand(), cx); });
-    // address -> { status, label, focused, kind, msg, sessionId, path, dir, question, next, logTasks,
-    //              liveTasks, prs, announce, picks: { id, sel: Set[] }, sending }
+    // address -> { status, label, focused, kind, msg, sessionId, path, dir, dialog, next, logTasks,
+    //              liveTasks, prs, picks: Set (for the shown multi-select page), sending }
     this.info = new Map();
     // folder -> { handle, stopped }
     this.watches = new Map();
@@ -39,17 +39,19 @@ export default class Inbox extends View {
   }
 
   // The panel's buttons as commands, for keys.json and scripts (`herdr-app do "inbox.next:t7 0"`):
-  // pick:<terminal> <question> <option>, answer:<terminal>, next:<terminal> <index>. Indexes from 0.
+  // pick:<terminal> <option> (an option of the question shown now), answer:<terminal> (send the
+  // multi-select picks, or submit on the review page), next:<terminal> <index>. Indexes from 0.
   command(c, cx) {
-    const m = /^(pick|answer|next):(\S+)((?: \d+)*)$/.exec(c ?? "");
+    const m = /^(pick|answer|next):(\S+)(?: (\d+))?$/.exec(c ?? "");
     const entry = m && this.info.get(m[2]);
     if (!entry) {
       notify({ title: "受信箱: 使えない命令です", body: String(c), level: "error" });
       return;
     }
-    const [i, j] = m[3].trim().split(" ").map(Number);
-    if (m[1] === "pick" && entry.question?.questions?.[i]?.options?.[j]) this.pick(m[2], entry, i, j, cx);
-    else if (m[1] === "answer" && entry.picks) this.answer(m[2], entry, cx);
+    const i = Number(m[3]);
+    const page = entry.dialog;
+    if (m[1] === "pick" && page?.kind === "question" && page.options[i]) this.pick(m[2], entry, i, cx);
+    else if (m[1] === "answer" && page) this.answer(m[2], entry, cx);
     else if (m[1] === "next" && entry.next?.[i] && entry.status !== "blocked") this.sendNext(m[2], entry, entry.next[i], cx);
     else notify({ title: "受信箱: いまは実行できません", body: String(c), level: "error" });
   }
@@ -63,12 +65,13 @@ export default class Inbox extends View {
       entry.label = `${a.space_name} / ${a.tab_name}`;
       entry.focused = a.focused;
       if (known?.status === a.status) continue;
-      // Herdr already announces every block; ours adds the question itself, so it waits for one.
-      entry.announce = this.started && a.status === "blocked" && !a.focused;
+      const announce = this.started && a.status === "blocked" && !a.focused;
       entry.status = a.status;
       this.info.set(a.address, entry);
       cx.spawn(async (cx) => {
         await this.locate(a.address, entry);
+        await this.readDialog(cx, a.address, entry);
+        if (announce) this.announce(a.address, entry);
         await this.parse(a.address, entry);
         await this.readTasks(entry);
         this.watchFolders(cx);
@@ -119,10 +122,8 @@ export default class Inbox extends View {
       const tail = await exec("tail", TAIL_ARGS(entry.path));
       if (tail.code === 0) {
         const p = readPending(tail.stdout);
-        entry.question = p.question;
         entry.next = p.next;
         entry.logTasks = p.tasks;
-        if (entry.picks?.id !== p.question?.id) entry.picks = null;
       }
       // PRs can come up anywhere in a session, so this reads the whole transcript (grep is fast).
       const prs = await exec("/usr/bin/grep", ["-o", "-E", PR_PATTERN, entry.path]);
@@ -130,7 +131,14 @@ export default class Inbox extends View {
     } catch (e) {
       console.log(`inbox: parse ${entry.path}: ${e}`);
     }
-    this.maybeAnnounce(address, entry);
+  }
+
+  // The question dialog as the screen shows it now. It may appear a moment after the status turns.
+  async readDialog(cx, address, entry) {
+    const asking = entry.status === "blocked" && entry.kind === "question";
+    const page = asking ? await this.screenWhen(cx, address, parseDialog) : null;
+    if (!samePage(page, entry.dialog)) entry.picks = new Set();
+    entry.dialog = page;
   }
 
   async readTasks(entry) {
@@ -143,16 +151,14 @@ export default class Inbox extends View {
     }
   }
 
-  maybeAnnounce(address, entry) {
-    if (!entry.announce || entry.status !== "blocked") return;
-    if (entry.kind !== "question") { entry.announce = false; return; }
-    const q = entry.question?.questions?.[0];
-    if (!q) return;
-    entry.announce = false;
-    const more = entry.question.questions.length > 1 ? ` ほか ${entry.question.questions.length - 1} 問` : "";
+  // Herdr already announces every block; ours adds the question itself, so only questions get one.
+  announce(address, entry) {
+    if (entry.kind !== "question") return;
+    const tabs = entry.dialog?.tabs?.length ?? 0;
+    const body = entry.dialog?.question ?? (entry.msg ?? "").replace(/^answer:\s*/, "");
     notify({
       title: `質問: ${entry.label}`,
-      body: `${q.question}${more}`,
+      body: tabs > 1 ? `${body} ほか ${tabs - 1} 問` : body,
       level: "warning",
       action: { name: "agent.focus", args: { terminal: address } },
     });
@@ -178,11 +184,12 @@ export default class Inbox extends View {
       const w = { handle: null, stopped: false };
       this.watches.set(dir, w);
       cx.spawn(async (cx) => {
+        // The next watch is always registered before reading, so no write falls between two watches.
+        // Writes before the first one (a new session's question lands right then) are covered by
+        // reading everything under it once.
+        w.handle = watchFolder(dir);
+        let changed = [dir];
         while (!w.stopped) {
-          w.handle = watchFolder(dir);
-          let changed;
-          try { changed = await w.handle; } catch { break; }
-          if (w.stopped) break;
           const all = changed.includes(dir);
           let hit = 0;
           for (const [address, e] of entries()) {
@@ -198,6 +205,9 @@ export default class Inbox extends View {
             hit++;
           }
           if (hit) cx.notify();
+          try { changed = await w.handle; } catch { break; }
+          if (w.stopped) break;
+          w.handle = watchFolder(dir);
         }
       });
     }
@@ -214,48 +224,49 @@ export default class Inbox extends View {
     return null;
   }
 
-  // Claude Code's question dialog: a digit picks option N (and moves on); with several to pick, digits
-  // toggle and Tab moves on. With more than one question or a multi-select one, a review page follows
-  // and "1" submits. Every key goes only after the screen shows the expected question and options.
-  answer(address, entry, cx) {
-    if (entry.sending) return;
+  // Claude Code's question dialog, one page at a time: a digit picks option N and moves on; on a
+  // multi-select page digits toggle and Tab moves on; the review page submits with "1". A digit is also
+  // an answer to a permission prompt, so before every key the screen must still show the page the
+  // person picked from and the agent must still be waiting on a question. (hc keys has no conditional
+  // form, so the gap of one call between that check and the key remains.)
+  answer(address, entry, cx, choice = null) {
+    const page = entry.dialog;
+    if (entry.sending || !page) return;
     entry.sending = true;
     cx.spawn(async (cx) => {
       const fail = (why) => {
         notify({ title: "回答を送りませんでした", body: why, level: "error", action: { name: "agent.focus", args: { terminal: address } } });
       };
-      try {
+      const press = async (key, ready) => {
+        if (!(await this.screenWhen(cx, address, (s) => ready(parseDialog(s))))) throw new Error("画面の質問がパネルの表示と一致しません");
         const got = JSON.parse((await hc(["get", address, "--json"])).stdout);
-        if (got.status?.state !== "blocked" || got.status?.kind !== "question") return fail("質問の画面ではなくなっています");
-        const qs = entry.question.questions;
-        const sel = entry.picks.sel;
-        for (const [i, q] of qs.entries()) {
-          const shown = await this.screenWhen(cx, address, (s) => {
-            const o = screenOptions(s, q.question);
-            return o && q.options.every((opt, k) => o.get(k + 1)?.label === opt.label) ? o : null;
-          });
-          if (!shown) return fail(`画面の「${q.question}」の選択肢が会話記録と一致しません`);
-          const picked = [...sel[i]].sort((x, y) => x - y);
-          if (!q.multiSelect) {
-            await hc(["keys", address, String(picked[0] + 1)]);
-            continue;
-          }
-          if (q.options.some((_o, k) => shown.get(k + 1).checked)) return fail(`「${q.question}」にすでに印が付いています`);
-          for (const k of picked) await hc(["keys", address, String(k + 1)]);
-          const marked = await this.screenWhen(cx, address, (s) => {
-            const o = screenOptions(s, q.question);
-            return o && q.options.every((_o, k) => o.get(k + 1)?.checked === sel[i].has(k));
-          });
-          if (!marked) return fail(`「${q.question}」の印が思ったとおりに付きませんでした`);
-          await hc(["keys", address, "tab"]);
+        if (got.status?.state !== "blocked" || got.status?.kind !== "question") throw new Error("質問の画面ではなくなっています");
+        await hc(["keys", address, key]);
+      };
+      const onPage = (d) => samePage(d, page);
+      try {
+        if (page.kind === "review") {
+          await press("1", onPage);
+        } else if (!page.multiSelect) {
+          await press(String(page.options[choice].n), onPage);
+        } else {
+          const picked = [...entry.picks].sort((x, y) => x - y);
+          if (!picked.length) return fail("選んでいません");
+          await press(String(page.options[picked[0]].n), (d) => onPage(d) && d.options.every((o) => !o.checked));
+          for (const k of picked.slice(1)) await press(String(page.options[k].n), onPage);
+          await press("tab", (d) => onPage(d) && d.options.every((o, k) => o.checked === entry.picks.has(k)));
         }
-        const single = qs.length === 1 && !qs[0].multiSelect;
-        if (!single) {
-          if (!(await this.screenWhen(cx, address, onReview))) return fail("確認の画面が出ませんでした");
-          await hc(["keys", address, "1"]);
-        }
+        // Show the next page (or nothing once it's answered) as soon as the screen moves on.
+        entry.dialog = (await this.screenWhen(cx, address, (s) => {
+          const d = parseDialog(s);
+          return onPage(d) ? null : { d };
+        }))?.d ?? null;
+        entry.picks = new Set();
       } catch (e) {
-        return fail(String(e));
+        fail(e instanceof Error ? e.message : String(e));
+        // The person may have moved the dialog on by hand; show what the screen has now.
+        entry.dialog = parseDialog((await hc(["read", address, "--lines", "0"])).stdout);
+        entry.picks = new Set();
       } finally {
         entry.sending = false;
         cx.notify();
@@ -263,18 +274,9 @@ export default class Inbox extends View {
     });
   }
 
-  pick(address, entry, qi, oi, cx) {
-    const qs = entry.question.questions;
-    if (entry.picks?.id !== entry.question.id) entry.picks = { id: entry.question.id, sel: qs.map(() => new Set()) };
-    const set = entry.picks.sel[qi];
-    if (qs[qi].multiSelect) {
-      if (set.has(oi)) set.delete(oi); else set.add(oi);
-    } else {
-      set.clear();
-      set.add(oi);
-    }
-    // One question with one answer needs no confirming: the pick is the answer.
-    if (qs.length === 1 && !qs[0].multiSelect) this.answer(address, entry, cx);
+  pick(address, entry, i, cx) {
+    if (!entry.dialog.multiSelect) return this.answer(address, entry, cx, i);
+    if (entry.picks.has(i)) entry.picks.delete(i); else entry.picks.add(i);
     cx.notify();
   }
 
@@ -304,43 +306,40 @@ export default class Inbox extends View {
       .child(label);
   }
 
-  questionView(address, entry, t) {
-    const qs = entry.question.questions;
-    // Free text ("Type something") isn't offered: it's answered on screen.
-    const answerable = entry.status === "blocked" && entry.kind === "question";
-    const single = qs.length === 1 && !qs[0].multiSelect;
-    const sel = entry.picks?.id === entry.question.id ? entry.picks.sel : qs.map(() => new Set());
-    const ready = sel.every((s) => s.size > 0);
-    return v_flex()
-      .gap(8)
-      .p(8)
-      .rounded(6)
-      .bg(t.surface)
-      .border(1)
-      .border_color(t.border)
-      .children(qs.map((q, qi) => v_flex()
-        .gap(4)
-        .child(h_flex().gap(6).items_center()
-          .when(Boolean(q.header), (el) => el.child(div().px(5).rounded(4).bg(t.raised).text_size(11).text_color(t.muted).child(q.header)))
-          .when(Boolean(q.multiSelect), (el) => el.child(div().text_size(11).text_color(t.dim).child("複数選択"))))
-        .child(div().text_size(13).text_color(t.foreground).child(q.question))
-        .children((q.options ?? []).map((o, oi) => {
-          const on = sel[qi]?.has(oi);
-          const mark = single ? `${oi + 1}.` : q.multiSelect ? (on ? "☑" : "☐") : (on ? "◉" : "○");
-          const body = v_flex().flex_1()
+  // The page of the question dialog the screen shows. Free text ("Type something") and "Chat about
+  // this" aren't offered: they're answered on screen.
+  dialogView(address, entry, t) {
+    const page = entry.dialog;
+    const busy = entry.sending;
+    const tabs = page.tabs.length > 1
+      ? h_flex().gap(4).flex_wrap().children(page.tabs.map((tab) => div().px(5).rounded(4).bg(t.raised).text_size(11)
+        .text_color(tab.done ? t.done : t.muted).child(`${tab.done ? "☒" : "☐"} ${tab.label}`)))
+      : null;
+    const box = v_flex().gap(6).p(8).rounded(6).bg(t.surface).border(1).border_color(t.border).when(Boolean(tabs), (el) => el.child(tabs));
+    if (page.kind === "review") {
+      return box
+        .child(div().text_size(12.5).text_color(t.foreground).child("回答の確認"))
+        .children(page.answers.map((x) => v_flex()
+          .child(div().text_size(12).text_color(t.muted).child(x.question))
+          .child(div().pl(8).text_size(12.5).text_color(t.foreground).child(`→ ${x.answer}`))))
+        .child(h_flex().child(this.button(`answer-${address}`, busy ? "送信中…" : "回答を送る", t, (_e, cx) => this.answer(address, entry, cx), { primary: true, disabled: busy })));
+    }
+    return box
+      .when(page.multiSelect, (el) => el.child(div().text_size(11).text_color(t.dim).child("複数選択")))
+      .child(div().text_size(13).text_color(t.foreground).child(page.question))
+      .children(page.options.map((o, i) => {
+        const on = entry.picks?.has(i);
+        const mark = page.multiSelect ? (on ? "☑" : "☐") : `${o.n}.`;
+        const row = h_flex().id(`opt-${address}-${i}`).px(6).py(3).rounded(5).gap(6)
+          .child(v_flex().flex_1()
             .child(div().text_size(12.5).text_color(t.foreground).child(`${mark} ${o.label}`))
-            .when(Boolean(o.description), (el) => el.child(div().text_size(11.5).text_color(t.dim).child(o.description)));
-          const row = h_flex().id(`opt-${address}-${qi}-${oi}`).px(6).py(3).rounded(5).gap(6).child(body)
-            .when(on && !single, (el) => el.border(1).border_color(t.accent));
-          return answerable && !entry.sending
-            ? row.cursor_pointer().bg(t.raised).hover((s) => s.bg(t.hover)).on_click((_e, cx) => this.pick(address, entry, qi, oi, cx))
-            : row;
-        }))))
-      .when(answerable && !single, (el) => el.child(h_flex().gap(8).items_center()
-        .child(this.button(`answer-${address}`, entry.sending ? "送信中…" : "回答を送る", t, (_e, cx) => this.answer(address, entry, cx),
-          { primary: true, disabled: !ready || entry.sending }))
-        .when(!ready, (el) => el.child(div().text_size(11).text_color(t.dim).child("すべての質問で選んでください")))))
-      .when(!answerable, (el) => el.child(div().text_size(11).text_color(t.dim).child("この質問は画面で答えてください")));
+            .when(Boolean(o.description), (el) => el.child(div().text_size(11.5).text_color(t.dim).child(o.description))))
+          .when(Boolean(on), (el) => el.border(1).border_color(t.accent));
+        return busy ? row : row.cursor_pointer().bg(t.raised).hover((s) => s.bg(t.hover)).on_click((_e, cx) => this.pick(address, entry, i, cx));
+      }))
+      .when(page.multiSelect, (el) => el.child(h_flex().gap(8).items_center()
+        .child(this.button(`answer-${address}`, busy ? "送信中…" : "次へ", t, (_e, cx) => this.answer(address, entry, cx),
+          { primary: true, disabled: busy || !entry.picks?.size }))));
   }
 
   planView(plan, t) {
@@ -398,7 +397,7 @@ export default class Inbox extends View {
       .when(Boolean(plan), (el) => el.child(this.planView(plan, t)))
       .when(a.status === "blocked" && entry.kind === "permission" && Boolean(entry.msg), (el) =>
         el.child(div().text_size(12).text_color(t.muted).child(`${entry.msg}（画面で承認してください）`)))
-      .when(Boolean(entry.question), (el) => el.child(this.questionView(a.address, entry, t)))
+      .when(Boolean(entry.dialog) && a.status === "blocked", (el) => el.child(this.dialogView(a.address, entry, t)))
       .when(Boolean(showNext), (el) => el.child(v_flex().gap(4)
         .child(div().text_size(11).text_color(t.dim).child("次の一手"))
         .children(entry.next.map((n, i) => v_flex()
