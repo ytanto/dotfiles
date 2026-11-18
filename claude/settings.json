@@ -150,5 +150,18 @@
     ]
   },
   "voiceEnabled": true,
-  "autoUpdates": true
+  "autoUpdates": true,
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/dotfiles/herdr-app/session-rules.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
 }

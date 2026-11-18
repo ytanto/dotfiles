@@ -40,5 +40,11 @@ export PLAYWRIGHT_MCP_CONFIG=$HOME/.config/playwright-mcp/config.json
 # 人の操作が要る認証のときに起動時の指定で窓を出せるよう、既に値があれば残す（.zshenv は子の zsh でも読まれるため）
 export PLAYWRIGHT_MCP_HEADLESS=${PLAYWRIGHT_MCP_HEADLESS:-true}
 
+# Herdr デスクトップ版の受信箱パネルが段取りを読めるよう、そこで動く Claude にだけ TaskCreate などを使わせる。
+# デスクトップ版の端末（herdr-core）にだけ HC_TERMINAL_ID があり、ターミナル版の herdr には無い
+if [ -n "${HC_TERMINAL_ID-}" ]; then
+  export CLAUDE_CODE_ENABLE_TODO_TOOLS=1
+fi
+
 # Local-only overrides (not tracked)
 [ -f "$HOME/.zshenv.local" ] && source "$HOME/.zshenv.local"
