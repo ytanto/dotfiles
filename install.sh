@@ -51,6 +51,8 @@ link herdr-app/layouts/main-inbox.json "$HOME/.config/herdr-app/layouts/main-inb
 # settings.json はアプリ自身もズームや設定画面の操作で書き直す。リンク越しに書くのでリンクは外れない
 link herdr-app/settings.json "$HOME/.config/herdr-app/settings.json"
 link herdr-app/themes/ghostty.json "$HOME/.config/herdr-app/themes/ghostty.json"
+# 手を入れた keys.json は、アプリの更新で新しい既定のキーが足されないので、要るものは手で足す
+link herdr-app/keys.json "$HOME/.config/herdr-app/keys.json"
 link mise/config.toml "$HOME/.config/mise/config.toml"
 link ccstatusline/settings.json "$HOME/.config/ccstatusline/settings.json"
 
