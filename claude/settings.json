@@ -87,6 +87,19 @@
   "skillOverrides": {
     "herdr": "off"
   },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/dotfiles/herdr-app/session-rules.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
   "statusLine": {
     "type": "command",
     "command": "$HOME/.local/share/mise/shims/ccstatusline",
@@ -150,18 +163,5 @@
     ]
   },
   "voiceEnabled": true,
-  "autoUpdates": true,
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/dotfiles/herdr-app/session-rules.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ]
-  }
+  "autoUpdates": true
 }
