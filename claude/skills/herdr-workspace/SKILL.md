@@ -1,66 +1,79 @@
 ---
 name: herdr-workspace
-description: herdr（ターミナルのタブ・ペインを管理するツール）の中から、作業の場所を整える。新しいタブで Claude セッションをリモートコントロール付きで開く、worktree とタブをまとめて作る、サーバーやログを横のペインに出す、入力待ち・終わったセッションを一覧にする、他のセッションの画面を割り込まずに読む、タブを片付ける。「新しいタブで Claude 開いて」「〇〇リポジトリで △△ という名前でセッション作って」「どのセッションが止まってる？」「〇〇のセッションが何してるか見て」「worktree とタブ作って」「サーバーを横で起動して」「タブ片付けて」のように頼まれたときに使う。herdr の話題に触れただけでは起動しない。
+description: Herdr デスクトップ版（herdr-app と herdr-core の hc）の中から、作業の場所を整える。新しいタブで Claude セッションをリモートコントロール付きで開く、worktree とタブをまとめて作る、サーバーやログを横のペインに出す、入力待ち・終わったセッションを一覧にする、他のセッションの画面を割り込まずに読む、タブを片付ける。「新しいタブで Claude 開いて」「〇〇リポジトリで △△ という名前でセッション作って」「どのセッションが止まってる？」「〇〇のセッションが何してるか見て」「worktree とタブ作って」「サーバーを横で起動して」「タブ片付けて」のように頼まれたときに使う。herdr の話題に触れただけでは起動しない。
 argument-hint: "[やりたいこと（例: crosslog-front で nuxt4 という名前のセッション）]"
 ---
 
-# herdr で作業の場所を整える
+# Herdr デスクトップ版で作業の場所を整える
 
-herdr の CLI は、動いている herdr にソケット経由でつながる。**最初に `HERDR_ENV=1` を確かめる。** 1 でなければ herdr の外なので、そう伝えて止める。
+窓の中身（スペース・タブ・ペイン）は `herdr-app`、端末とその中のエージェント（起動・状態・画面・送信）は `hc` で扱う。**最初に `$HC_TERMINAL_ID` があるかを確かめる。** 無ければデスクトップ版の端末の外なので、そう伝えて止める。
 
-コマンドの全体は `herdr <workspace|tab|pane|agent|wait|worktree> --help` で引ける。公式の `herdr` スキル（`~/.agents/skills/herdr/SKILL.md`）は API の説明が詳しいので、知らないコマンドを使うときに読む。
+知らないコマンドは `herdr-app --skill`・`hc --skill`・`herdr-app commands`（引数の一覧）で引く。
 
 ## 決まりごと
 
-- **他のセッションに文字やキーを送り込まない**（`pane send-text`・`pane send-keys`・`agent send`・Claude の入った他人のペインへの `pane run`）。承認ボタンを押す操作も同じ。相手の作業や承認の仕組みを壊す。頼みごとは `SendMessage` でする
-- **タブ・ペインは、頼まれたときだけ作る。** 気を利かせて増やさない。作るときは `--no-focus` で、ユーザーの見ている画面を奪わない
-- **閉じる前に確かめる。** エージェントが動いている（`working`・`blocked`）タブやペインを閉じると作業が止まり、戻せない
-- ID（`w1:t5S` など）は毎回 `list` で取り直す。前に見た ID を使い回さない
+- **他のセッションに文字やキーを送り込まない**（`hc send`・`hc keys`）。承認ボタンを押す操作も同じ。相手の作業や承認の仕組みを壊す。頼みごとは `SendMessage` でする
+- **タブ・ペインは、頼まれたときだけ作る。** 気を利かせて増やさない。作るときは `--focus false` を付け、指示者の見ている画面を奪わない
+- **閉じる前に確かめる。** エージェントが動いている（`working`・`blocked`）タブを閉じると作業が止まり、戻せない
+- ID（スペース `sp…`・タブ `tb…`・ペイン `p…`・端末 `t12`）は毎回 `herdr-app ls` で取り直す。前に見た ID を使い回さない
 
 ## 新しいタブで Claude セッションを開く
 
-1. ワークスペースを選ぶ: `herdr workspace list` のラベルから、リポジトリに合うものを選ぶ。合うものが無ければユーザーに聞く
-2. **先にタブを作る**: `herdr tab create --workspace <ID> --label <名前> --cwd <リポジトリの絶対パス> --no-focus`。返ってきた `result.root_pane.pane_id` を控える
-3. そのペインで起動する: `herdr pane run <pane_id> "claude --remote-control <名前>"`
-   - 最初の指示があるときは後ろに足す: `claude --remote-control <名前> "<指示>"`。指示には背景と目的を書く（会話は引き継がれない）
-4. 起動を待って画面を読む: `herdr pane wait-output <pane_id> --match "remote-control is active" --timeout 30000` → `herdr pane read <pane_id> --source visible --lines 30`
-5. 報告する: タブの場所（ワークスペース名・タブ名）、ディレクトリ、画面に出た `https://claude.ai/code/session_…` の URL
-
-**`herdr agent start` は使わない。** タブを指定しないと、ワークスペースで開いているタブ（ユーザーの別作業のタブのこともある）にペインとして足される。
+1. スペースを選ぶ: `herdr-app ls` のスペースの名前と `folder` から、リポジトリに合うものを選ぶ。合うものが無ければ指示者に聞く
+2. タブを作って起動する:
+   ```sh
+   herdr-app do tab.new --space <スペースID> --name <名前> --folder <リポジトリの絶対パス> \
+     --argv '["claude","--remote-control","<名前>","<指示>"]' --focus false
+   ```
+   - 返ってきた `terminal`（`t12` など）を控える
+   - `argv` は配列で渡すので、指示にクォートの入れ子が要らない。指示が無ければ要素ごと省く。指示には背景と目的を書く（会話は引き継がれない）
+   - `argv` はログインシェル経由で起動されるので、mise で入れたコマンドも通る
+3. 起動を確かめる: 数秒おいて `hc read <端末> --lines 40` を読む
+   - `remote-control is active` と `https://claude.ai/code/session_…` が出ていれば起動している
+   - 「このフォルダを信頼するか」の画面で止まっていたら（初めて開くフォルダ）、自分では選ばず、指示者に伝えて待つ
+4. 報告する: スペース名・タブ名、ディレクトリ、セッションの URL
 
 ## worktree とタブをまとめて作る
 
-`herdr worktree create --cwd <リポジトリ> --branch <ブランチ> --base <元のブランチ> --label <名前> --no-focus` で、worktree とそのタブができる。返ってきた結果からペインとパスを控え、セッションが要るなら上の 3 から続ける。
-
-リポジトリに worktree の決まり（CLAUDE.md・worktree 用のスキル）があれば、そちらのセットアップ手順（依存の入れ方・.env の扱い）に従う。
+worktree はリポジトリの決まり（CLAUDE.md・worktree 用のスキル。CrossLog なら `crosslog:dev-worktree`）で作り、セットアップ（依存の入れ方・.env の扱い）もそれに従う。できた worktree のパスを `--folder` にして、上の 2 からタブを作る。
 
 ## サーバーやログを横のペインに出す
 
-1. 自分のペインの横に分ける: `herdr pane split --current --direction right --cwd <ディレクトリ> --no-focus`。新しいペインは `result.pane.pane_id`
-2. コマンドを流す: `herdr pane run <pane_id> "<起動コマンド>"`
-3. 準備ができるまで待つ: `herdr pane wait-output <pane_id> --match "<起動完了の文字>" --timeout <ミリ秒>`
-4. エラーを見るときは `herdr pane read <pane_id> --source recent --lines 80`
+1. 自分のペインを調べる: `herdr-app ls` で、端末が `$HC_TERMINAL_ID` のペイン（`pane`）を探す
+2. 横に分ける: `herdr-app do pane.split --direction right --pane <自分のペイン>`。新しい `terminal` を控える。中身はシェルで、起動するフォルダは選べない
+3. 準備ができるまでの待ちを先に始めてから、コマンドを送る（待ちは、始めたあとに出た文字だけを見る）:
+   ```sh
+   hc wait <端末> --output "<起動完了の文字>" --timeout <秒> & w=$!
+   hc send <端末> "cd <ディレクトリ> && <起動コマンド>"
+   wait $w
+   ```
+   - 待つ文字は、送るコマンドの中に無い文字にする。コマンドの中にあると、入力の表示で先に当たって、起動前に待ちが抜ける
+4. エラーを見るときは `hc read <端末> --lines 80`
+5. 止めるときは `herdr-app do pane.close --pane <分けたペイン>`。中のサーバーも止まる
 
 起動前のポートの確認など、リポジトリ側のサーバー起動の決まりがあればそれに従う。
 
 ## 止まっている・終わったセッションを一覧にする
 
-`herdr agent list`（または `herdr tab list`）の `agent_status` を読み、次の順に表で伝える。
+`herdr-app ls` のスペース・タブ・端末と `status`（端末の場所の名前は `hc ls --json` の `where` にもある）を読み、次の順に表で伝える。
 
 | 状態 | 意味 |
 | --- | --- |
-| `blocked` | 承認や入力を待っている。真っ先に伝える |
+| `blocked` | 承認や入力を待っている。真っ先に伝える。`hc get <端末> --json` の `status.kind`（`question` は質問、`permission` は承認）と `status.msg` を添える |
 | `done` | 終わったが、まだ誰も見ていない |
 | `working` | 作業中 |
 | `idle` | 入力待ち（何も頼まれていない） |
 
-ワークスペース名とタブ名を添える。`unknown` はシェルだけのペインなので、聞かれなければ省く。
+スペース名とタブ名を添える。`status` が無いのはシェルだけの端末なので、聞かれなければ省く。
 
 ## 他のセッションの画面を読む
 
-`herdr agent read <名前かペインID> --source recent --lines 100` で読み、何をしているか・どこで止まっているかを短くまとめる。**読むだけで、何も送らない。**
+`hc read <端末> --lines 100` で読み、何をしているか・どこで止まっているかを短くまとめる。作業中・入力待ちの間は、今の画面だけが返る。**読むだけで、何も送らない。**
 
 ## タブを片付ける
 
-- 名前を直す: `herdr tab rename <tab_id> <名前>`（制御文字が混じった名前もこれで直る）
-- 閉じる: 閉じる候補をワークスペース名・タブ名・状態つきで一覧にし、OK をもらってから `herdr tab close <tab_id>`
+- 名前を直す: `herdr-app do tab.rename --id <タブID> --name <名前>`
+- 閉じる: 閉じる候補をスペース名・タブ名・状態つきで一覧にし、OK をもらってから `herdr-app do tab.close --id <タブID> --confirmed true`
+  - タブを閉じると、中の Claude も終わる。会話は `/resume` の一覧から開き直せる
+  - Claude を `/exit` で終えようとすると、裏で動くシェルがあるときに「止めて閉じるか」の確認が出る。閉じるときはタブごと閉じる
+  - スペースの最後のタブを閉じると、スペースも閉じる
