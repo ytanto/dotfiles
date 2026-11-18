@@ -45,6 +45,9 @@ done
 link ghostty/config "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
 
 link herdr/config.toml "$HOME/.config/herdr/config.toml"
+# Herdr デスクトップ版はリンク越しの編集を見張らない。dotfiles 側を直したら layout.switch で切り替え直して読み直す
+link herdr-app/mods/inbox "$HOME/.config/herdr-app/mods/inbox"
+link herdr-app/layouts/main-inbox.json "$HOME/.config/herdr-app/layouts/main-inbox.json"
 link mise/config.toml "$HOME/.config/mise/config.toml"
 link ccstatusline/settings.json "$HOME/.config/ccstatusline/settings.json"
 
