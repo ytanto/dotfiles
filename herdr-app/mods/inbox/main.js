@@ -40,9 +40,10 @@ export default class Inbox extends View {
 
   // The panel's buttons as commands, for keys.json and scripts (`herdr-app do "inbox.next:t7 0"`):
   // pick:<terminal> <option> (an option of the question shown now), answer:<terminal> (send the
-  // multi-select picks, or submit on the review page), next:<terminal> <index>. Indexes from 0.
+  // multi-select picks, or submit on the review page), next:<terminal> <index>, choose:<terminal> <index>
+  // (a choice listed in prose). Indexes from 0.
   command(c, cx) {
-    const m = /^(pick|answer|next):(\S+)(?: (\d+))?$/.exec(c ?? "");
+    const m = /^(pick|answer|next|choose):(\S+)(?: (\d+))?$/.exec(c ?? "");
     const entry = m && this.info.get(m[2]);
     if (!entry) {
       notify({ title: "受信箱: 使えない命令です", body: String(c), level: "error" });
@@ -52,7 +53,8 @@ export default class Inbox extends View {
     const page = entry.dialog;
     if (m[1] === "pick" && page?.kind === "question" && page.options[i]) this.pick(m[2], entry, i, cx);
     else if (m[1] === "answer" && page) this.answer(m[2], entry, cx);
-    else if (m[1] === "next" && entry.next?.[i] && entry.status !== "blocked") this.sendNext(m[2], entry, entry.next[i], cx);
+    else if (m[1] === "next" && entry.next?.[i] && entry.status !== "blocked") this.send(m[2], entry, entry.next[i].prompt, cx);
+    else if (m[1] === "choose" && entry.choices?.[i] && entry.status !== "blocked") this.send(m[2], entry, `${entry.choices[i].key} で進めて`, cx);
     else notify({ title: "受信箱: いまは実行できません", body: String(c), level: "error" });
   }
 
@@ -123,6 +125,7 @@ export default class Inbox extends View {
       if (tail.code === 0) {
         const p = readPending(tail.stdout);
         entry.next = p.next;
+        entry.choices = p.choices;
         entry.logTasks = p.tasks;
       }
       // PRs can come up anywhere in a session, so this reads the whole transcript (grep is fast).
@@ -135,10 +138,14 @@ export default class Inbox extends View {
 
   // The question dialog as the screen shows it now. It may appear a moment after the status turns.
   async readDialog(cx, address, entry) {
-    const asking = entry.status === "blocked" && entry.kind === "question";
-    const page = asking ? await this.screenWhen(cx, address, parseDialog) : null;
-    if (!samePage(page, entry.dialog)) entry.picks = new Set();
-    entry.dialog = page;
+    try {
+      const asking = entry.status === "blocked" && entry.kind === "question";
+      const page = asking ? await this.screenWhen(cx, address, parseDialog) : null;
+      if (!samePage(page, entry.dialog)) entry.picks = new Set();
+      entry.dialog = page;
+    } catch (e) {
+      console.log(`inbox: dialog ${address}: ${e}`);
+    }
   }
 
   async readTasks(entry) {
@@ -280,15 +287,17 @@ export default class Inbox extends View {
     cx.notify();
   }
 
-  sendNext(address, entry, item, cx) {
+  // A proposal answered once is gone from the panel; the transcript's next human turn makes it stale too.
+  send(address, entry, text, cx) {
     cx.spawn(async (cx) => {
       // hc send refuses a blocked agent, so a permission prompt can't swallow the text.
-      const r = await hc(["send", address, item.prompt]);
+      const r = await hc(["send", address, text]);
       if (r.code !== 0) {
         notify({ title: "送れませんでした", body: r.stderr.trim(), level: "error" });
         return;
       }
       entry.next = null;
+      entry.choices = null;
       cx.notify();
     });
   }
@@ -330,16 +339,29 @@ export default class Inbox extends View {
       .children(page.options.map((o, i) => {
         const on = entry.picks?.has(i);
         const mark = page.multiSelect ? (on ? "☑" : "☐") : `${o.n}.`;
+        // Sessions under this panel's rules start the recommended option's description with "おすすめ".
+        const recommended = o.description.startsWith("おすすめ");
         const row = h_flex().id(`opt-${address}-${i}`).px(6).py(3).rounded(5).gap(6)
-          .child(v_flex().flex_1()
-            .child(div().text_size(12.5).text_color(t.foreground).child(`${mark} ${o.label}`))
-            .when(Boolean(o.description), (el) => el.child(div().text_size(11.5).text_color(t.dim).child(o.description))))
+          .child(v_flex().flex_1().min_w(0)
+            .child(div().text_size(12.5).text_color(recommended ? t.accent : t.foreground).child(`${mark} ${o.label}`))
+            .when(Boolean(o.description), (el) => el.child(div().w_full().whitespace_normal().text_size(11.5).text_color(t.dim).child(o.description))))
           .when(Boolean(on), (el) => el.border(1).border_color(t.accent));
         return busy ? row : row.cursor_pointer().bg(t.raised).hover((s) => s.bg(t.hover)).on_click((_e, cx) => this.pick(address, entry, i, cx));
       }))
       .when(page.multiSelect, (el) => el.child(h_flex().gap(8).items_center()
         .child(this.button(`answer-${address}`, busy ? "送信中…" : "次へ", t, (_e, cx) => this.answer(address, entry, cx),
           { primary: true, disabled: busy || !entry.picks?.size }))));
+  }
+
+  // Choices the agent listed in prose ("A：…／B：…") rather than asking with AskUserQuestion.
+  choicesView(address, entry, t) {
+    return v_flex().gap(4).p(8).rounded(6).bg(t.surface).border(1).border_color(t.border)
+      .child(div().text_size(11).text_color(t.dim).child("文章で聞かれている選択肢"))
+      .children(entry.choices.map((c, i) => h_flex().id(`choice-${address}-${i}`).px(6).py(3).rounded(5).gap(6)
+        .cursor_pointer().bg(t.raised).hover((s) => s.bg(t.hover))
+        .on_click((_e, cx) => this.send(address, entry, `${c.key} で進めて`, cx))
+        .child(div().flex_none().text_size(12.5).font_semibold().text_color(c.recommended ? t.accent : t.foreground).child(c.key))
+        .child(div().flex_1().min_w(0).w_full().whitespace_normal().text_size(12).text_color(t.foreground).child(c.recommended ? `（おすすめ）${c.text}` : c.text))));
   }
 
   planView(plan, t) {
@@ -376,7 +398,9 @@ export default class Inbox extends View {
     const entry = this.info.get(a.address) ?? {};
     const pane = panes().find((p) => p.terminal === a.address);
     const kindLabel = a.status === "blocked" ? LABEL[entry.kind] ?? LABEL.blocked : LABEL[a.status];
-    const showNext = a.status !== "blocked" && a.status !== "working" && entry.next?.length;
+    const answerable = a.status === "done" || a.status === "idle";
+    const showNext = answerable && entry.next?.length;
+    const showChoices = answerable && entry.choices?.length;
     // The task folder empties once every step is done; the transcript still has the finished plan.
     const plan = currentPlan(entry.liveTasks?.length ? entry.liveTasks : entry.logTasks);
     return v_flex()
@@ -398,11 +422,12 @@ export default class Inbox extends View {
       .when(a.status === "blocked" && entry.kind === "permission" && Boolean(entry.msg), (el) =>
         el.child(div().text_size(12).text_color(t.muted).child(`${entry.msg}（画面で承認してください）`)))
       .when(Boolean(entry.dialog) && a.status === "blocked", (el) => el.child(this.dialogView(a.address, entry, t)))
+      .when(Boolean(showChoices), (el) => el.child(this.choicesView(a.address, entry, t)))
       .when(Boolean(showNext), (el) => el.child(v_flex().gap(4)
         .child(div().text_size(11).text_color(t.dim).child("次の一手"))
         .children(entry.next.map((n, i) => v_flex()
           .gap(2)
-          .child(h_flex().child(this.button(`next-${a.address}-${i}`, n.label, t, (_e, cx) => this.sendNext(a.address, entry, n, cx), { primary: i === 0 })))
+          .child(h_flex().child(this.button(`next-${a.address}-${i}`, n.label, t, (_e, cx) => this.send(a.address, entry, n.prompt, cx), { primary: i === 0 })))
           .when(Boolean(n.reason), (el) => el.child(div().pl(2).text_size(11).text_color(t.dim).child(n.reason)))))))
       .when(Boolean(entry.prs?.length), (el) => el.child(this.prView(a.address, entry.prs, t)));
   }
