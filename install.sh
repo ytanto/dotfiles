@@ -48,6 +48,9 @@ link herdr/config.toml "$HOME/.config/herdr/config.toml"
 # Herdr デスクトップ版はリンク越しの編集を見張らない。dotfiles 側を直したら layout.switch で切り替え直して読み直す
 link herdr-app/mods/inbox "$HOME/.config/herdr-app/mods/inbox"
 link herdr-app/layouts/main-inbox.json "$HOME/.config/herdr-app/layouts/main-inbox.json"
+# settings.json はアプリ自身もズームや設定画面の操作で書き直す。リンク越しに書くのでリンクは外れない
+link herdr-app/settings.json "$HOME/.config/herdr-app/settings.json"
+link herdr-app/themes/ghostty.json "$HOME/.config/herdr-app/themes/ghostty.json"
 link mise/config.toml "$HOME/.config/mise/config.toml"
 link ccstatusline/settings.json "$HOME/.config/ccstatusline/settings.json"
 
