@@ -47,6 +47,7 @@ link ghostty/config "$HOME/Library/Application Support/com.mitchellh.ghostty/con
 link herdr/config.toml "$HOME/.config/herdr/config.toml"
 # Herdr デスクトップ版はリンク越しの編集を見張らない。dotfiles 側を直したら layout.switch で切り替え直して読み直す
 link herdr-app/mods/inbox "$HOME/.config/herdr-app/mods/inbox"
+link herdr-app/mods/inbox-toast "$HOME/.config/herdr-app/mods/inbox-toast"
 link herdr-app/layouts/main-inbox.json "$HOME/.config/herdr-app/layouts/main-inbox.json"
 # settings.json はアプリ自身もズームや設定画面の操作で書き直す。リンク越しに書くのでリンクは外れない
 link herdr-app/settings.json "$HOME/.config/herdr-app/settings.json"
