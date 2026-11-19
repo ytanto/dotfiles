@@ -13,7 +13,6 @@ import json
 import os
 import re
 import subprocess
-import time
 from datetime import datetime, timedelta, timezone
 
 PROJECTS = os.path.expanduser("~/.claude/projects")
@@ -27,6 +26,10 @@ APPROVAL = re.compile(
     re.I,
 )
 ASKING = re.compile(r"(ですか|ますか|でしょうか|[?？])")
+# 推奨の印。選択肢の名前に付けるほか、説明の頭に「おすすめ：」と書く決まりもある
+RECOMMENDED = re.compile(r"Recommended|おすすめ|推奨")
+# 同じ会話でこの間隔より短く続けて聞いたら、まとめられた可能性が高い
+BURST_SEC = 300
 # どのリポジトリでも同じになる、確認ルールの対象になりがちな操作
 GENERIC_RISKY = re.compile(
     r"(^|[;&|(]\s*|\s)(rm|git reset --hard|git clean|git checkout --|git restore|gh pr create|"
@@ -52,7 +55,7 @@ def text_of(content):
     return ""
 
 
-def load_entries(path, since):
+def load_entries(path, since, until):
     with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
             try:
@@ -60,9 +63,19 @@ def load_entries(path, since):
             except ValueError:
                 continue
             ts = d.get("timestamp")
-            if ts and parse_ts(ts) < since:
+            if ts and not since <= parse_ts(ts) < until:
                 continue
             yield d
+
+
+def is_recommended(option):
+    return bool(
+        RECOMMENDED.search(option.get("label", "")) or RECOMMENDED.match(option.get("description", "").strip())
+    )
+
+
+def local_date(s):
+    return datetime.strptime(s, "%Y-%m-%d").astimezone()
 
 
 def ask_rules_for(cwd, cache):
@@ -90,11 +103,15 @@ def ask_rules_for(cwd, cache):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--days", type=float, default=7)
+    # 暦日で区切って比べるとき用（手元の時刻の日付。--until はその日を含まない）
+    ap.add_argument("--since", type=local_date)
+    ap.add_argument("--until", type=local_date)
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
-    since = datetime.now(timezone.utc) - timedelta(days=args.days)
-    cutoff = time.time() - args.days * 86400
+    since = args.since or datetime.now(timezone.utc) - timedelta(days=args.days)
+    until = args.until or datetime.now(timezone.utc) + timedelta(days=1)
+    cutoff = since.timestamp()
 
     files = [
         f
@@ -103,6 +120,8 @@ def main():
     ]
 
     prompts, rejects, asks, prose, risky = [], [], [], [], []
+    ask_calls = []
+    next_replies = 0  # 返答の最後の「次の一手の候補」（```next）に、番号などの短い返事で答えた数
     human_turns = 0
     sessions = set()
     cwds = set()
@@ -113,7 +132,8 @@ def main():
         uses = {}
         last_text = ""
         oks = []  # この会話で指示者が OK を返した時刻（二重の確認の判定に使う）
-        for d in load_entries(f, since):
+        last_answer = None  # この会話で直前に AskUserQuestion に答えた時刻
+        for d in load_entries(f, since, until):
             t = d.get("type")
             if d.get("cwd"):
                 cwds.add(d["cwd"])
@@ -136,7 +156,9 @@ def main():
                 s = text_of(content).strip()
                 if s and not s.startswith("<") and "cross-session-message" not in s:
                     human_turns += 1
-                    if len(s) <= 25 and APPROVAL.match(s) and ASKING.search(last_text[-300:]):
+                    if len(s) <= 25 and "```next" in last_text:
+                        next_replies += 1
+                    elif len(s) <= 25 and APPROVAL.match(s) and ASKING.search(last_text[-300:]):
                         prose.append(
                             dict(ts=d["timestamp"], project=project, reply=s, question=clip(last_text[-300:], 300))
                         )
@@ -159,10 +181,22 @@ def main():
             if name == "AskUserQuestion":
                 tr = d.get("toolUseResult") or {}
                 answers = tr.get("answers", {}) if isinstance(tr, dict) else {}
+                if answers:
+                    now = parse_ts(d["timestamp"])
+                    ask_calls.append(
+                        dict(
+                            questions=len(inp.get("questions", [])),
+                            burst=bool(
+                                use_ts and last_answer and (parse_ts(use_ts) - last_answer).total_seconds() < BURST_SEC
+                            ),
+                        )
+                    )
+                    last_answer = now
                 for q in inp.get("questions", []):
-                    labels = [o.get("label", "") for o in q.get("options", [])]
+                    options = q.get("options", [])
+                    labels = [o.get("label", "") for o in options]
                     a = answers.get(q.get("question"), "")
-                    chosen = [l for l in labels if a == l or a.startswith(l)]
+                    chosen = [o for o in options if a == o.get("label") or a.startswith(o.get("label") or "\0")]
                     asks.append(
                         dict(
                             ts=d["timestamp"],
@@ -171,7 +205,7 @@ def main():
                             question=clip(q.get("question"), 300),
                             options=labels,
                             answer=clip(a, 200),
-                            picked_recommended=any(re.search(r"Recommended|おすすめ|推奨", l) for l in chosen),
+                            picked_recommended=any(is_recommended(o) for o in chosen),
                             free_text=bool(a) and not chosen,
                         )
                     )
@@ -239,6 +273,8 @@ def main():
     metrics = dict(
         generated_at=datetime.now().isoformat(timespec="minutes"),
         days=args.days,
+        since=since.isoformat(timespec="minutes"),
+        until=until.isoformat(timespec="minutes") if args.until else None,
         sessions=len(sessions),
         human_turns=human_turns,
         harness_prompts=waits(prompts),
@@ -249,7 +285,11 @@ def main():
         ask_questions=waits(asks),
         ask_picked_recommended=sum(a["picked_recommended"] for a in asks),
         ask_free_text=sum(a["free_text"] for a in asks),
+        ask_calls=len(ask_calls),
+        ask_multi_question_calls=sum(c["questions"] > 1 for c in ask_calls),
+        ask_bursts_within_5min=sum(c["burst"] for c in ask_calls),
         prose_short_approvals=len(prose),
+        next_short_replies=next_replies,
         generic_risky_commands=collections.Counter(
             f"{r['decision']}/{r['source']}/{r['code'] or '-'}" for r in risky
         ).most_common(),
@@ -271,7 +311,9 @@ def main():
     # 前回と比べられるよう、数字だけを記録の外に残す（記録の本文は残さない）
     os.makedirs(HISTORY, exist_ok=True)
     prev = sorted(glob.glob(f"{HISTORY}/metrics-*.json"))
-    dump_path = os.path.join(HISTORY, f"metrics-{datetime.now():%Y-%m-%d}.json")
+    # 暦日で区切ったときは、期間の最後の日の名前で残す（あとから過去の日を数え直しても、今日の記録を上書きしない）
+    last_day = until - timedelta(days=1) if args.until else datetime.now()
+    dump_path = os.path.join(HISTORY, f"metrics-{last_day:%Y-%m-%d}.json")
     with open(dump_path, "w", encoding="utf-8") as f:
         json.dump(metrics, f, ensure_ascii=False, indent=1)
     prev = [p for p in prev if p != dump_path]
