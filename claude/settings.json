@@ -97,6 +97,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '会話が要約されました。ここからも、指示者への返答・作業の途中の文・AskUserQuestion は日本語で書いてください（コード・コマンド・ログ・識別子は英語のままでよい）。'",
+            "timeout": 5
+          }
+        ]
       }
     ]
   },
