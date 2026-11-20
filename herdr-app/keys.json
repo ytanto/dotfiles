@@ -36,6 +36,7 @@
     "cmd-/": "app.help",
     "cmd-shift-/": "app.help",
     "cmd-b": "layout.toggle:sidebar",
+    "cmd-i": "layout.toggle:inbox",
     "cmd-=": "app.zoom_in",
     "cmd-+": "app.zoom_in",
     "cmd--": "app.zoom_out",
