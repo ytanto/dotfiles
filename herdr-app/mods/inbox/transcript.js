@@ -8,9 +8,14 @@ export const TAIL_ARGS = (path) => ["-c", String(TAIL_BYTES), path];
 const PR_PATTERN = "https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]+";
 
 // A perl filter for the rows prLinks can use. Tool results and copies of API requests can be megabytes
-// each and never count, so they're dropped before the app has to parse them. Quotes inside text are
-// escaped in JSON, so these bare keys match only the row's own fields.
-export const PR_ROWS = `print if m{${PR_PATTERN}} && /"role":"(?:user|assistant)"/ && !/"type":"(?:tool_result|api-request-blob)"/`;
+// each and mostly don't count, so they're dropped before the app has to parse them; only the results of
+// gh pr create calls are kept, found by the call's id. Quotes inside text are escaped in JSON, so these
+// bare keys match only the row's own fields.
+export const PR_ROWS = [
+  `if (/"role":"assistant"/ && /gh pr create/ && /"type":"tool_use","id":"([^"]+)"/) { $made{$1} = 1; print; next }`,
+  `if (/"tool_use_id":"([^"]+)"/ && $made{$1}) { print; next }`,
+  `print if m{${PR_PATTERN}} && /"role":"(?:user|assistant)"/ && !/"type":"(?:tool_result|api-request-blob)"/`,
+].join("\n");
 
 // Claude Code names a project folder after its cwd with every non-alphanumeric character as "-".
 export const projectDir = (home, cwd) => `${home}/.claude/projects/${cwd.replace(/[^A-Za-z0-9]/g, "-")}`;
@@ -111,6 +116,18 @@ export function parseChoices(text) {
   return picking ? choices : null;
 }
 
+// Japanese questions are often closed with "。": "残しておきましょうか。".
+const QUESTION = /(?:[？?]|(?:ます|です|ましょう|でしょう)か。)$/;
+
+// A question asked in prose at the very end of the reply, outside code blocks, or null.
+export function parseAsked(text) {
+  const line = text.replace(/```[\s\S]*?```/g, "").split("\n").map((l) => l.trim()).filter(Boolean).pop();
+  if (!line) return null;
+  const plain = line.replace(/\*\*/g, "").replace(/^(?:[-*・>]\s+)+/, "").trim();
+  const sentence = plain.split(/(?<=[。！？!?])/).map((s) => s.trim()).filter(Boolean).pop() ?? "";
+  return QUESTION.test(sentence) ? sentence : null;
+}
+
 const taskOf = (t) => ({
   id: String(t.id),
   subject: t.subject ?? "",
@@ -145,8 +162,9 @@ function replayTasks(row, calls, tasks) {
   }
 }
 
-// { next: [{label, prompt, reason, recommended}] | null, choices: [{key, text, recommended}] | null, tasks: [...] }.
-// Both proposals come from the last reply only: a new turn makes earlier ones stale. A pending question
+// { next: [{label, prompt, reason, recommended}] | null, choices: [{key, text, recommended}] | null,
+//   asked: string | null, tasks: [...] }.
+// All three come from the last reply only: a new turn makes earlier ones stale. A pending question
 // isn't here: Claude Code writes a tool call to the transcript only once it has a result, so questions
 // come from the screen.
 export function readPending(tail) {
@@ -167,10 +185,15 @@ export function readPending(tail) {
     if (row.type !== "assistant" || !Array.isArray(content)) continue;
     for (const b of content) if (b?.type === "text" && typeof b.text === "string") texts.push(b.text);
   }
+  const next = parseNext(texts.join("\n"));
+  // Only the reply's last text: earlier ones in the turn are progress notes.
+  const last = texts.length ? texts[texts.length - 1] : "";
+  const choices = last ? parseChoices(last) : null;
   return {
-    next: parseNext(texts.join("\n")),
-    // Only the reply's last text: earlier ones in the turn are progress notes.
-    choices: texts.length ? parseChoices(texts[texts.length - 1]) : null,
+    next,
+    choices,
+    // A proposal or a list of choices already says what is asked.
+    asked: next || choices || !last ? null : parseAsked(last),
     tasks: [...tasks.values()].sort((x, y) => Number(x.id) - Number(y.id)),
   };
 }
@@ -208,16 +231,31 @@ function spokenTexts(row) {
   return texts(c).filter((s) => !NOT_SPOKEN.test(s));
 }
 
-// Unique PR URLs from transcript rows, newest mention first.
+const urlsIn = (s) => s.match(new RegExp(PR_PATTERN, "g")) ?? [];
+const resultText = (c) => (typeof c === "string" ? c : Array.isArray(c) ? c.map((b) => b?.text ?? "").join("\n") : "");
+
+// Unique PR URLs from transcript rows: the ones the session made first, then the ones that came up in
+// the conversation, each newest first. A session that talks about many PRs would bury its own otherwise.
+// Made means named by the result of its own gh pr create; PRs its sub-agents made can't be told apart
+// from ones they merely mention, so they count as mentioned.
 export function prLinks(rows) {
-  const urls = [];
+  const creating = new Set();
+  const made = [];
+  const spoken = [];
   for (const line of rows.split("\n")) {
     if (!line.startsWith("{")) continue;
     let row;
     try { row = JSON.parse(line); } catch { continue; }
-    for (const s of spokenTexts(row)) urls.push(...(s.match(new RegExp(PR_PATTERN, "g")) ?? []));
+    const c = row.message?.content;
+    if (Array.isArray(c) && !row.isSidechain) {
+      for (const b of c) {
+        if (row.type === "assistant" && b?.type === "tool_use" && b.name === "Bash" && /\bgh pr create\b/.test(b.input?.command ?? "")) creating.add(b.id);
+        if (row.type === "user" && b?.type === "tool_result" && creating.has(b.tool_use_id)) made.push(...urlsIn(resultText(b.content)));
+      }
+    }
+    for (const s of spokenTexts(row)) spoken.push(...urlsIn(s));
   }
-  return [...new Set(urls.reverse())];
+  return [...new Set([...made.reverse(), ...spoken.reverse()])];
 }
 
 // Claude Code's question dialog, read from the bottom of the screen. Text further up is conversation,

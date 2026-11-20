@@ -136,6 +136,7 @@ export default class Inbox extends View {
         const p = readPending(tail.stdout);
         entry.next = p.next;
         entry.choices = p.choices;
+        entry.asked = p.asked;
         entry.logTasks = p.tasks;
       }
       // PRs can come up anywhere in a session, so this reads the whole transcript (perl is fast).
@@ -308,6 +309,7 @@ export default class Inbox extends View {
       }
       entry.next = null;
       entry.choices = null;
+      entry.asked = null;
       cx.notify();
     });
   }
@@ -375,6 +377,13 @@ export default class Inbox extends View {
   }
 
   planView(plan, t) {
+    // A finished plan is history, maybe days old: its goal alone says what the session last did.
+    if (plan.done === plan.steps.length) {
+      return h_flex().gap(6).items_center()
+        .child(div().w(12).flex_none().text_size(11.5).text_color(t.done).child("✓"))
+        .child(div().flex_1().min_w(0).truncate().text_size(11.5).text_color(t.muted).child(plan.goal ?? "段取り"))
+        .child(div().flex_none().text_size(11).text_color(t.dim).child(`済 ${plan.done}/${plan.steps.length}`));
+    }
     return v_flex()
       .gap(3)
       .child(h_flex().gap(6).items_center()
@@ -411,6 +420,7 @@ export default class Inbox extends View {
     const answerable = a.status === "done" || a.status === "idle";
     const showNext = answerable && entry.next?.length;
     const showChoices = answerable && entry.choices?.length;
+    const showAsked = answerable && Boolean(entry.asked);
     // The task folder empties once every step is done; the transcript still has the finished plan.
     const plan = currentPlan(entry.liveTasks?.length ? entry.liveTasks : entry.logTasks);
     return v_flex()
@@ -433,6 +443,10 @@ export default class Inbox extends View {
         el.child(div().text_size(12).text_color(t.muted).child(`${entry.msg}（画面で承認してください）`)))
       .when(Boolean(entry.dialog) && a.status === "blocked", (el) => el.child(this.dialogView(a.address, entry, t)))
       .when(Boolean(showChoices), (el) => el.child(this.choicesView(a.address, entry, t)))
+      // Answered by typing on the screen, which the row's move button leads to.
+      .when(showAsked, (el) => el.child(v_flex().gap(4).p(8).rounded(6).bg(t.surface).border(1).border_color(t.border)
+        .child(div().text_size(11).text_color(t.dim).child("文章で聞かれていること"))
+        .child(div().min_w(0).w_full().whitespace_normal().text_size(12).text_color(t.foreground).child(entry.asked))))
       .when(Boolean(showNext), (el) => el.child(v_flex().gap(4)
         .child(div().text_size(11).text_color(t.dim).child("次の一手"))
         .children(entry.next.map((n, i) => v_flex()
