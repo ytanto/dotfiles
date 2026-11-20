@@ -20,13 +20,16 @@ export const taskDir = (home, sessionId) => `${home}/.claude/tasks/session-${ses
 
 const NEXT_BLOCK = /```next[^\S\n]*\n([\s\S]*?)\n[^\S\n]*```/g;
 
-// Tool results and injected context also arrive as "user" rows; only these are the person speaking.
-function isHumanTurn(row) {
-  if (row.type !== "user" || row.isMeta || row.isSidechain) return false;
+// A user row that starts a new turn: the person speaking, another session's message, a background task's
+// report. Tool results and context injected mid-turn are user rows too but continue the turn. Claude Code
+// marks turn starts with turnOrigin; rows from versions before it are told apart by isMeta.
+function startsTurn(row) {
+  if (row.type !== "user" || row.isSidechain) return false;
   const c = row.message?.content;
-  // Background tasks report back as user rows too.
-  if (typeof c === "string") return !c.startsWith("<task-notification>");
-  return Array.isArray(c) && c.length > 0 && !c.some((b) => b?.type === "tool_result");
+  if (Array.isArray(c) && c.some((b) => b?.type === "tool_result")) return false;
+  if (row.turnOrigin) return true;
+  if (row.isMeta) return false;
+  return typeof c === "string" || (Array.isArray(c) && c.length > 0);
 }
 
 const RECOMMENDED = /\s*[（(]おすすめ[）)]\s*/;
@@ -143,8 +146,9 @@ function replayTasks(row, calls, tasks) {
 }
 
 // { next: [{label, prompt, reason, recommended}] | null, choices: [{key, text, recommended}] | null, tasks: [...] }.
-// Both proposals count only until the person speaks again. A pending question isn't here: Claude Code
-// writes a tool call to the transcript only once it has a result, so questions come from the screen.
+// Both proposals come from the last reply only: a new turn makes earlier ones stale. A pending question
+// isn't here: Claude Code writes a tool call to the transcript only once it has a result, so questions
+// come from the screen.
 export function readPending(tail) {
   const calls = new Map();
   const tasks = new Map();
@@ -155,8 +159,7 @@ export function readPending(tail) {
     try { row = JSON.parse(line); } catch { continue; }
     if (row.isSidechain) continue;
     replayTasks(row, calls, tasks);
-    if (isHumanTurn(row)) {
-      // Whatever the assistant proposed before this is stale now.
+    if (startsTurn(row)) {
       texts = [];
       continue;
     }
