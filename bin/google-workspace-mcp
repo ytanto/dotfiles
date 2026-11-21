@@ -185,9 +185,23 @@ def _external(from_header: str, auth_results: str = "") -> bool:
         return True
     if addrs[0].rsplit("@", 1)[1].lower() != _own_domain:
         return True
-    # From は誰でも書けるので、社外から自社のドメインを名乗ったもの（DMARC が通らない）は社外とみなす
-    a = auth_results.lower()
-    return "dmarc=" in a and f"dmarc=pass" not in a
+    # From は誰でも書けるので、Google の受信サーバーが付けた認証結果で、自社のドメインの署名か DMARC が
+    # 通ったと確かめられたときだけ社内とみなす。読めない・欄が無いときは社外に倒す
+    return not _authenticated_as(auth_results, _own_domain)
+
+
+def _authenticated_as(auth_results: str, domain: str) -> bool:
+    # 送り手も同じ名前の欄を書けるが、受信サーバーの欄が先頭に付くので、先頭の欄の発行元を確かめて読む
+    parts = re.sub(r"\([^()]*\)", "", auth_results.lower()).split(";")
+    if not parts or parts[0].strip() != "mx.google.com":
+        return False
+    for method in parts[1:]:
+        kv = dict(re.findall(r'([a-z.]+)=("[^"]*"|\S+)', method))
+        if kv.get("dmarc") == "pass" and kv.get("header.from") == domain:
+            return True
+        if kv.get("dkim") == "pass" and kv.get("header.i", "").lstrip("@") == domain:
+            return True
+    return False
 
 
 @mcp.tool(annotations=READ_ONLY)
