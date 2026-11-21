@@ -118,6 +118,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I $HOME/dotfiles/claude/hooks/reply-language.py",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
