@@ -85,6 +85,11 @@
     ],
     "defaultMode": "auto"
   },
+  "deniedMcpServers": [
+    { "serverName": "claude.ai Gmail" },
+    { "serverName": "claude.ai Google Drive" },
+    { "serverName": "claude.ai Google Calendar" }
+  ],
   "model": "opus",
   "skillOverrides": {
     "herdr": "off"
