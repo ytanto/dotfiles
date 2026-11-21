@@ -169,15 +169,25 @@ def _body_text(payload: dict) -> str:
 _own_domain: str | None = None
 
 
-def _external(from_header: str) -> bool:
-    """差出人が自分と同じドメインでなければ True。社外の目印で、False でも中身を信じてよいという意味ではない。"""
+def _external(from_header: str, auth_results: str = "") -> bool:
+    """差出人が自社のドメインだと確かめられなければ True。社外の目印で、False でも中身を信じてよいという意味ではない。"""
     global _own_domain
     if _own_domain is None:
         me = _service("gmail", "v1").users().getProfile(userId="me").execute()["emailAddress"]
         _own_domain = me.rsplit("@", 1)[-1].lower()
-    # 表示名に自社のアドレスを書いた社外のメールを通さないよう、アドレスだけを取り出して完全一致で比べる
-    addr = email.utils.parseaddr(from_header)[1]
-    return addr.rsplit("@", 1)[-1].lower() != _own_domain if "@" in addr else True
+    # 個人の Gmail だと「同じドメイン」が世界中の利用者になり、目印にならない
+    if _own_domain in CONSUMER_DOMAINS:
+        return True
+    # 表示名に自社のアドレスを書いたものや、アドレスを複数並べた欄を通さないよう、
+    # ちょうど 1 つのアドレスに読めたときだけ、ドメインを完全一致で比べる
+    addrs = [a for _, a in email.utils.getaddresses([from_header]) if a]
+    if len(addrs) != 1 or addrs[0].count("@") != 1 or any(c.isspace() for c in addrs[0]):
+        return True
+    if addrs[0].rsplit("@", 1)[1].lower() != _own_domain:
+        return True
+    # From は誰でも書けるので、社外から自社のドメインを名乗ったもの（DMARC が通らない）は社外とみなす
+    a = auth_results.lower()
+    return "dmarc=" in a and f"dmarc=pass" not in a
 
 
 @mcp.tool(annotations=READ_ONLY)
@@ -195,7 +205,7 @@ def gmail_search(query: str, max_results: int = 20) -> Any:
         msg = (
             gmail.users()
             .messages()
-            .get(userId="me", id=m["id"], format="metadata", metadataHeaders=["From", "To", "Cc", "Subject", "Date"])
+            .get(userId="me", id=m["id"], format="metadata", metadataHeaders=["From", "To", "Cc", "Subject", "Date", "Authentication-Results"])
             .execute()
         )
         h = msg.get("payload", {}).get("headers", [])
@@ -205,7 +215,7 @@ def gmail_search(query: str, max_results: int = 20) -> Any:
                 "threadId": msg["threadId"],
                 "date": _header(h, "Date"),
                 "from": _header(h, "From"),
-                "external": _external(_header(h, "From")),
+                "external": _external(_header(h, "From"), _header(h, "Authentication-Results")),
                 "to": _header(h, "To"),
                 "cc": _header(h, "Cc"),
                 "subject": _header(h, "Subject"),
@@ -232,7 +242,7 @@ def gmail_read_thread(thread_id: str, max_chars_per_message: int = 8000) -> Any:
                 "id": msg["id"],
                 "date": _header(h, "Date"),
                 "from": _header(h, "From"),
-                "external": _external(_header(h, "From")),
+                "external": _external(_header(h, "From"), _header(h, "Authentication-Results")),
                 "to": _header(h, "To"),
                 "cc": _header(h, "Cc"),
                 "subject": _header(h, "Subject"),
