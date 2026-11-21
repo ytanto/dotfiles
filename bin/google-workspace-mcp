@@ -191,15 +191,37 @@ def _external(from_header: str, auth_results: str = "") -> bool:
 
 
 def _authenticated_as(auth_results: str, domain: str) -> bool:
-    # 送り手も同じ名前の欄を書けるが、受信サーバーの欄が先頭に付くので、先頭の欄の発行元を確かめて読む
-    parts = re.sub(r"\([^()]*\)", "", auth_results.lower()).split(";")
-    if not parts or parts[0].strip() != "mx.google.com":
+    # 送り手も同じ名前の欄を書けるが、受信サーバーの欄が先頭に付くので、先頭の欄の発行元を確かめて読む。
+    # 受信サーバーの欄にも、注釈の中に送り手が決められる文（封筒のアドレスなど）が入るので、
+    # 引用符や入れ子・対応しない括弧があれば読まずに社外に倒す
+    text = auth_results.lower()
+    if '"' in text:
         return False
-    for method in parts[1:]:
-        kv = dict(re.findall(r'([a-z.]+)=("[^"]*"|\S+)', method))
-        if kv.get("dmarc") == "pass" and kv.get("header.from") == domain:
+    depth, kept = 0, []
+    for ch in text:
+        if ch == "(":
+            depth += 1
+            if depth > 1:
+                return False
+        elif ch == ")":
+            depth -= 1
+            if depth < 0:
+                return False
+        elif depth == 0:
+            kept.append(ch)
+    if depth != 0:
+        return False
+    parts = "".join(kept).split(";")
+    if parts[0].strip() != "mx.google.com":
+        return False
+    for segment in parts[1:]:
+        tokens = segment.split()
+        if not tokens or not all(re.fullmatch(r"[a-z0-9._-]+=[a-z0-9@._+/=-]+", t) for t in tokens):
+            continue
+        props = dict(t.split("=", 1) for t in tokens[1:])
+        if tokens[0] == "dmarc=pass" and props.get("header.from") == domain:
             return True
-        if kv.get("dkim") == "pass" and kv.get("header.i", "").lstrip("@") == domain:
+        if tokens[0] == "dkim=pass" and props.get("header.i") == "@" + domain:
             return True
     return False
 
