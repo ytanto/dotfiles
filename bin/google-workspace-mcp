@@ -1,0 +1,435 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#   "mcp>=1.9,<2",
+#   "google-api-python-client>=2.100",
+#   "google-auth-oauthlib>=1.2",
+# ]
+# ///
+"""Gmail・Drive・Calendar を読む（予定だけは入れられる）手元の MCP サーバー。
+
+Google 公式の Workspace MCP サーバーは一般提供前で、通ったデータを Google が
+制限なく改善に使える規約になっている。正式版の API を直接呼べば、ふだんの
+Workspace の契約とデータ処理の約束の中に収まるので、小さく自前で包む。
+
+  google-workspace-mcp login   最初の 1 回だけ。ブラウザでログインしてトークンを保存する
+  google-workspace-mcp         MCP サーバー（stdio）として動く。Claude Code から起動される
+
+権限を読むだけ（予定の作成を除く）に絞っているのは、トークンが漏れても
+メールの送信・削除やファイルの書き換えまでは届かないようにするため。
+"""
+
+from __future__ import annotations
+
+import base64
+import functools
+import html
+import os
+import re
+import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+from google.auth.exceptions import RefreshError
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
+
+SCOPES = [
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/drive.readonly",
+    "https://www.googleapis.com/auth/calendar.events",
+    "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+    "https://www.googleapis.com/auth/calendar.freebusy",
+]
+
+CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "google-workspace-mcp"
+CREDENTIALS_PATH = CONFIG_DIR / "credentials.json"
+TOKEN_PATH = CONFIG_DIR / "token.json"
+
+NOT_LOGGED_IN = (
+    f"Google にログインしていません（{TOKEN_PATH} が無いか、失効しています）。"
+    "ターミナルで `google-workspace-mcp login` を実行してから、もう一度呼んでください。"
+)
+
+READ_ONLY = ToolAnnotations(readOnlyHint=True, openWorldHint=True)
+WRITES = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True)
+
+mcp = FastMCP("google-workspace")
+
+_services: dict[str, Any] = {}
+_creds: Credentials | None = None
+
+
+class NotLoggedIn(Exception):
+    pass
+
+
+def _save_token(creds: Credentials) -> None:
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    TOKEN_PATH.write_text(creds.to_json())
+    TOKEN_PATH.chmod(0o600)
+
+
+def _credentials() -> Credentials:
+    global _creds
+    if _creds is None:
+        if not TOKEN_PATH.exists():
+            raise NotLoggedIn
+        _creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
+    if not _creds.valid:
+        if not _creds.refresh_token:
+            raise NotLoggedIn
+        try:
+            _creds.refresh(Request())
+        except RefreshError as e:
+            raise NotLoggedIn from e
+        _save_token(_creds)
+    return _creds
+
+
+def _service(name: str, version: str):
+    creds = _credentials()
+    key = f"{name}/{version}"
+    if key not in _services:
+        _services[key] = build(name, version, credentials=creds, cache_discovery=False)
+    return _services[key]
+
+
+def _guard(fn):
+    """Google 側の失敗を、例外ではなく読める文として返す（呼び手が次の手を決められるように）。"""
+
+    # FastMCP は引数の型から道具の入力の形を作るので、wraps で元の関数の引数を見せる
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except NotLoggedIn:
+            return {"error": NOT_LOGGED_IN}
+        except HttpError as e:
+            return {"error": f"Google API のエラー（{e.status_code}）: {e.reason}"}
+
+    return wrapper
+
+
+# ---- Gmail ---------------------------------------------------------------
+
+
+def _header(headers: list[dict], name: str) -> str:
+    for h in headers:
+        if h["name"].lower() == name.lower():
+            return h["value"]
+    return ""
+
+
+def _decode(data: str) -> str:
+    return base64.urlsafe_b64decode(data + "=" * (-len(data) % 4)).decode("utf-8", errors="replace")
+
+
+def _html_to_text(s: str) -> str:
+    s = re.sub(r"(?is)<(script|style).*?</\1>", "", s)
+    s = re.sub(r"(?i)<br\s*/?>|</p>|</div>|</tr>", "\n", s)
+    s = re.sub(r"<[^>]+>", "", s)
+    return re.sub(r"\n{3,}", "\n\n", html.unescape(s)).strip()
+
+
+def _body_text(payload: dict) -> str:
+    # 返信の引用まで含めて読むため text/plain を優先し、無いときだけ HTML を崩して使う
+    plain, rich = [], []
+
+    def walk(part: dict) -> None:
+        mime = part.get("mimeType", "")
+        data = part.get("body", {}).get("data")
+        if data and mime == "text/plain":
+            plain.append(_decode(data))
+        elif data and mime == "text/html":
+            rich.append(_html_to_text(_decode(data)))
+        for p in part.get("parts", []) or []:
+            walk(p)
+
+    walk(payload)
+    return "\n".join(plain) if plain else "\n".join(rich)
+
+
+@mcp.tool(annotations=READ_ONLY)
+@_guard
+def gmail_search(query: str, max_results: int = 20) -> Any:
+    """Gmail をメールの検索式で探す（例: `is:unread newer_than:1d`, `from:foo@example.com subject:請求`）。
+
+    メールごとに id・threadId・日時・差出人・宛先・件名・冒頭の抜粋・ラベルを返す。
+    本文はスレッド単位で gmail_read_thread で読む。
+    """
+    gmail = _service("gmail", "v1")
+    res = gmail.users().messages().list(userId="me", q=query, maxResults=min(max_results, 100)).execute()
+    out = []
+    for m in res.get("messages", []):
+        msg = (
+            gmail.users()
+            .messages()
+            .get(userId="me", id=m["id"], format="metadata", metadataHeaders=["From", "To", "Cc", "Subject", "Date"])
+            .execute()
+        )
+        h = msg.get("payload", {}).get("headers", [])
+        out.append(
+            {
+                "id": msg["id"],
+                "threadId": msg["threadId"],
+                "date": _header(h, "Date"),
+                "from": _header(h, "From"),
+                "to": _header(h, "To"),
+                "cc": _header(h, "Cc"),
+                "subject": _header(h, "Subject"),
+                "snippet": html.unescape(msg.get("snippet", "")),
+                "labels": msg.get("labelIds", []),
+            }
+        )
+    return {"count": len(out), "messages": out}
+
+
+@mcp.tool(annotations=READ_ONLY)
+@_guard
+def gmail_read_thread(thread_id: str, max_chars_per_message: int = 8000) -> Any:
+    """Gmail のスレッドを、古い順にメールの見出しと本文（テキスト）で読む。"""
+    gmail = _service("gmail", "v1")
+    thread = gmail.users().threads().get(userId="me", id=thread_id, format="full").execute()
+    out = []
+    for msg in thread.get("messages", []):
+        payload = msg.get("payload", {})
+        h = payload.get("headers", [])
+        body = _body_text(payload)
+        out.append(
+            {
+                "id": msg["id"],
+                "date": _header(h, "Date"),
+                "from": _header(h, "From"),
+                "to": _header(h, "To"),
+                "cc": _header(h, "Cc"),
+                "subject": _header(h, "Subject"),
+                "labels": msg.get("labelIds", []),
+                "body": body[:max_chars_per_message],
+                "truncated": len(body) > max_chars_per_message,
+            }
+        )
+    return {"threadId": thread_id, "messages": out}
+
+
+# ---- Drive ---------------------------------------------------------------
+
+# Google 形式のファイルは中身をそのまま取れないので、読める形式に書き出して読む
+EXPORTS = {
+    "application/vnd.google-apps.document": "text/plain",
+    "application/vnd.google-apps.spreadsheet": "text/csv",
+    "application/vnd.google-apps.presentation": "text/plain",
+}
+
+FILE_FIELDS = "id, name, mimeType, modifiedTime, owners(displayName, emailAddress), webViewLink, parents"
+
+
+@mcp.tool(annotations=READ_ONLY)
+@_guard
+def drive_search(text: str = "", name: str = "", mime_type: str = "", max_results: int = 20) -> Any:
+    """Drive のファイルを探す。text は本文も含む全文検索、name はファイル名の部分一致、
+    mime_type は種類で絞る（例: application/vnd.google-apps.document）。新しく更新された順に返す。
+    共有ドライブも含む。
+    """
+    clauses = ["trashed = false"]
+    for value, tmpl in ((text, "fullText contains '{}'"), (name, "name contains '{}'"), (mime_type, "mimeType = '{}'")):
+        if value:
+            clauses.append(tmpl.format(value.replace("\\", "\\\\").replace("'", "\\'")))
+    drive = _service("drive", "v3")
+    res = (
+        drive.files()
+        .list(
+            q=" and ".join(clauses),
+            pageSize=min(max_results, 100),
+            orderBy=None if text else "modifiedTime desc",
+            fields=f"files({FILE_FIELDS})",
+            includeItemsFromAllDrives=True,
+            supportsAllDrives=True,
+            corpora="allDrives",
+        )
+        .execute()
+    )
+    files = res.get("files", [])
+    return {"count": len(files), "files": files}
+
+
+@mcp.tool(annotations=READ_ONLY)
+@_guard
+def drive_read(file_id: str, max_chars: int = 50000) -> Any:
+    """Drive のファイルの中身をテキストで読む。Docs・Slides はテキスト、Sheets は先頭のシートを CSV で返す。
+    テキストでないファイル（PDF・画像など）は、情報とリンクだけを返す。
+    """
+    drive = _service("drive", "v3")
+    meta = drive.files().get(fileId=file_id, fields=FILE_FIELDS, supportsAllDrives=True).execute()
+    mime = meta["mimeType"]
+    if mime in EXPORTS:
+        raw = drive.files().export(fileId=file_id, mimeType=EXPORTS[mime]).execute()
+    elif mime.startswith("text/") or mime in ("application/json", "text/csv"):
+        raw = drive.files().get_media(fileId=file_id, supportsAllDrives=True).execute()
+    else:
+        return {"file": meta, "content": None, "note": f"{mime} はテキストとして読めない種類です。webViewLink から開いてください。"}
+    text = raw.decode("utf-8", errors="replace") if isinstance(raw, bytes) else str(raw)
+    return {"file": meta, "content": text[:max_chars], "truncated": len(text) > max_chars}
+
+
+# ---- Calendar ------------------------------------------------------------
+
+
+def _local_now() -> datetime:
+    return datetime.now().astimezone()
+
+
+def _rfc3339(value: str, default: datetime) -> str:
+    if not value:
+        return default.isoformat()
+    # 日付だけ・タイムゾーンなしの指定は、この Mac の時刻帯として扱う（呼び手が毎回付けなくて済むように）
+    dt = datetime.fromisoformat(value)
+    if dt.tzinfo is None:
+        dt = dt.astimezone()
+    return dt.isoformat()
+
+
+@mcp.tool(annotations=READ_ONLY)
+@_guard
+def calendar_list_calendars() -> Any:
+    """見られるカレンダーの一覧（id・名前・自分の権限・主カレンダーか）を返す。"""
+    cal = _service("calendar", "v3")
+    items = cal.calendarList().list().execute().get("items", [])
+    return [
+        {"id": c["id"], "summary": c.get("summaryOverride") or c.get("summary"), "accessRole": c.get("accessRole"), "primary": c.get("primary", False)}
+        for c in items
+    ]
+
+
+@mcp.tool(annotations=READ_ONLY)
+@_guard
+def calendar_list_events(
+    time_min: str = "", time_max: str = "", calendar_id: str = "primary", query: str = "", max_results: int = 50
+) -> Any:
+    """カレンダーの予定を、始まる順に返す。time_min・time_max は ISO 8601（例: 2026-11-21T09:00:00+09:00、日付だけも可）。
+    省略すると、今から 24 時間先まで。参加者・自分の返事・場所・会議の URL・説明の冒頭も返す。
+    """
+    now = _local_now()
+    cal = _service("calendar", "v3")
+    res = (
+        cal.events()
+        .list(
+            calendarId=calendar_id,
+            timeMin=_rfc3339(time_min, now),
+            timeMax=_rfc3339(time_max, now + timedelta(days=1)),
+            q=query or None,
+            singleEvents=True,
+            orderBy="startTime",
+            maxResults=min(max_results, 250),
+        )
+        .execute()
+    )
+    out = []
+    for e in res.get("items", []):
+        attendees = e.get("attendees", [])
+        me = next((a for a in attendees if a.get("self")), None)
+        out.append(
+            {
+                "id": e["id"],
+                "summary": e.get("summary", ""),
+                "start": e.get("start", {}).get("dateTime") or e.get("start", {}).get("date"),
+                "end": e.get("end", {}).get("dateTime") or e.get("end", {}).get("date"),
+                "location": e.get("location", ""),
+                "meet": e.get("hangoutLink", ""),
+                "organizer": e.get("organizer", {}).get("email", ""),
+                "myResponse": me.get("responseStatus") if me else None,
+                "attendees": [{"email": a.get("email"), "response": a.get("responseStatus")} for a in attendees],
+                "description": (e.get("description") or "")[:1000],
+                "htmlLink": e.get("htmlLink", ""),
+            }
+        )
+    return {"count": len(out), "events": out}
+
+
+@mcp.tool(annotations=READ_ONLY)
+@_guard
+def calendar_freebusy(emails: list[str], time_min: str = "", time_max: str = "") -> Any:
+    """人やカレンダーの埋まっている時間帯を返す（空き時間を探すため）。emails は自分を含めてよい。"""
+    now = _local_now()
+    cal = _service("calendar", "v3")
+    res = (
+        cal.freebusy()
+        .query(
+            body={
+                "timeMin": _rfc3339(time_min, now),
+                "timeMax": _rfc3339(time_max, now + timedelta(days=7)),
+                "items": [{"id": e} for e in emails],
+            }
+        )
+        .execute()
+    )
+    return {k: v.get("busy", []) if not v.get("errors") else {"errors": v["errors"]} for k, v in res.get("calendars", {}).items()}
+
+
+@mcp.tool(annotations=WRITES)
+@_guard
+def calendar_create_event(
+    summary: str,
+    start: str,
+    end: str,
+    description: str = "",
+    location: str = "",
+    attendees: list[str] | None = None,
+    calendar_id: str = "primary",
+    send_updates: str = "none",
+) -> Any:
+    """カレンダーに予定を入れる。start・end は ISO 8601。attendees を入れても、send_updates が
+    "none"（既定）なら招待のメールは送らない。送るときは "all" にする。
+    """
+    cal = _service("calendar", "v3")
+    body: dict[str, Any] = {
+        "summary": summary,
+        "start": {"dateTime": _rfc3339(start, _local_now())},
+        "end": {"dateTime": _rfc3339(end, _local_now())},
+    }
+    if description:
+        body["description"] = description
+    if location:
+        body["location"] = location
+    if attendees:
+        body["attendees"] = [{"email": a} for a in attendees]
+    e = cal.events().insert(calendarId=calendar_id, body=body, sendUpdates=send_updates).execute()
+    return {"id": e["id"], "htmlLink": e.get("htmlLink"), "start": e["start"], "end": e["end"]}
+
+
+# ---- 入口 ------------------------------------------------------------------
+
+
+def login() -> int:
+    if not CREDENTIALS_PATH.exists():
+        print(
+            f"OAuth クライアントの JSON がありません: {CREDENTIALS_PATH}\n"
+            "Google Cloud Console でデスクトップ アプリのクライアントを作り、ダウンロードした JSON を置いてください:\n"
+            f"  mkdir -p {CONFIG_DIR}\n"
+            f"  mv ~/Downloads/client_secret_*.json {CREDENTIALS_PATH}\n"
+            f"  chmod 600 {CREDENTIALS_PATH}",
+            file=sys.stderr,
+        )
+        return 1
+    flow = InstalledAppFlow.from_client_secrets_file(str(CREDENTIALS_PATH), SCOPES)
+    # prompt=consent で毎回 refresh token を受け取る（無いと 1 時間でログインし直しになる）
+    creds = flow.run_local_server(port=0, access_type="offline", prompt="consent")
+    _save_token(creds)
+    print(f"ログインしました。トークンを {TOKEN_PATH} に保存しました。")
+    return 0
+
+
+if __name__ == "__main__":
+    if sys.argv[1:] == ["login"]:
+        sys.exit(login())
+    if sys.argv[1:]:
+        print("使い方: google-workspace-mcp [login]", file=sys.stderr)
+        sys.exit(2)
+    mcp.run()

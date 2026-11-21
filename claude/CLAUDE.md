@@ -121,6 +121,15 @@
 - 迷惑メール判定されたメールも検索対象に含めている。SPAM / TRASH にあるときは警告を出すので、配信を確認する場面ではその警告を見落とさないこと
 - 対象アドレス・件名などプロダクト固有の値はこのファイルに書かず、各プロダクトのリポジトリ側に置く
 
+## Gmail・Drive・Calendar を読む（google-workspace の MCP）
+
+- 指示者の仕事の Gmail・Drive・Calendar を読むときは、自前の MCP サーバー `google-workspace`（実体は `~/dotfiles/bin/google-workspace-mcp`）の道具を使う
+  - 正式版の Google API を呼ぶ。権限は読むだけで、予定の作成だけができる（メールの送信・削除、ファイルの書き換えはできない）
+  - Google 公式の Workspace MCP（`gmailmcp.googleapis.com` など）は使わない（理由: 一般提供前で、通ったデータを Google が制限なく改善に使える規約のため）
+- 予定を入れる（`calendar_create_event`）のは、指示者に聞いてから。参加者に招待のメールを送る（`send_updates: "all"`）のも同じ
+- 道具が「ログインしていません」と返したら、指示者にターミナルで `google-workspace-mcp login` を打ってもらう
+- OAuth クライアントの JSON とトークンは `~/.config/google-workspace-mcp/` に置く。**dotfiles には入れない**
+
 # Compact instructions
 
 会話を要約（compact）するときは、要約の本文を日本語で書く（理由: 要約が英語だと、要約のあとの返答が英語に切り替わる）。
