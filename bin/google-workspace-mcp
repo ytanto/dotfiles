@@ -59,6 +59,8 @@ NOT_LOGGED_IN = (
 )
 
 MAX_DESCRIPTION = 2000
+CONSUMER_DOMAINS = {"gmail.com", "googlemail.com"}
+ADDRESS_RE = re.compile(r"[^@\s]+@[^@\s]+")
 
 READ_ONLY = ToolAnnotations(readOnlyHint=True, openWorldHint=True)
 WRITES = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True)
@@ -403,7 +405,10 @@ def calendar_create_event(
         return {"error": f"説明は {MAX_DESCRIPTION} 文字までにしてください。"}
     if attendees:
         domain = cal.calendars().get(calendarId="primary").execute()["id"].rsplit("@", 1)[-1].lower()
-        outside = [a for a in attendees if a.rsplit("@", 1)[-1].lower() != domain]
+        # 個人の Gmail でログインしていると「同じドメイン」が世界中の Gmail の人になり、制限にならない
+        if domain in CONSUMER_DOMAINS:
+            return {"error": f"@{domain} のアカウントでは参加者を入れられません。仕事のアカウントでログインし直してください。"}
+        outside = [a for a in attendees if not ADDRESS_RE.fullmatch(a) or a.rsplit("@", 1)[-1].lower() != domain]
         if outside:
             return {"error": f"参加者に入れられるのは @{domain} のアドレスだけです。社外の人は、指示者がカレンダーで足してください: {outside}"}
     body: dict[str, Any] = {
