@@ -116,6 +116,15 @@ export function parseChoices(text) {
   return picking ? choices : null;
 }
 
+// Whether something written at `at` (ms) has waited more than one business day by `now`. Weekends
+// don't count, so Friday evening's stays fresh until Monday evening. Holidays count as working days:
+// leaving them out would need a calendar kept up to date.
+export function pastBusinessDay(at, now) {
+  const due = new Date(at);
+  do due.setDate(due.getDate() + 1); while (due.getDay() === 0 || due.getDay() === 6);
+  return now > due.getTime();
+}
+
 // Japanese questions are often closed with "。": "残しておきましょうか。".
 const QUESTION = /(?:[？?]|(?:ます|です|ましょう|でしょう)か。)$/;
 
@@ -162,8 +171,8 @@ function replayTasks(row, calls, tasks) {
   }
 }
 
-// { next: [{label, prompt, reason, recommended}] | null, choices: [{key, text, recommended}] | null,
-//   asked: string | null, tasks: [...] }.
+// { next: [{label, prompt, reason, recommended}] | null, nextAt: number | null,
+//   choices: [{key, text, recommended}] | null, asked: string | null, tasks: [...] }.
 // All three come from the last reply only: a new turn makes earlier ones stale. A pending question
 // isn't here: Claude Code writes a tool call to the transcript only once it has a result, so questions
 // come from the screen.
@@ -171,6 +180,7 @@ export function readPending(tail) {
   const calls = new Map();
   const tasks = new Map();
   let texts = [];
+  let nextAt = null;
   for (const line of tail.split("\n")) {
     if (!line.startsWith("{")) continue;
     let row;
@@ -179,11 +189,16 @@ export function readPending(tail) {
     replayTasks(row, calls, tasks);
     if (startsTurn(row)) {
       texts = [];
+      nextAt = null;
       continue;
     }
     const content = row.message?.content;
     if (row.type !== "assistant" || !Array.isArray(content)) continue;
-    for (const b of content) if (b?.type === "text" && typeof b.text === "string") texts.push(b.text);
+    for (const b of content) {
+      if (b?.type !== "text" || typeof b.text !== "string") continue;
+      texts.push(b.text);
+      if (b.text.includes("```next")) nextAt = Date.parse(row.timestamp) || null;
+    }
   }
   const next = parseNext(texts.join("\n"));
   // Only the reply's last text: earlier ones in the turn are progress notes.
@@ -191,6 +206,8 @@ export function readPending(tail) {
   const choices = last ? parseChoices(last) : null;
   return {
     next,
+    // When the reply with the proposals was written (ms), for telling an abandoned one from a fresh one.
+    nextAt: next ? nextAt : null,
     choices,
     // A proposal or a list of choices already says what is asked.
     asked: next || choices || !last ? null : parseAsked(last),

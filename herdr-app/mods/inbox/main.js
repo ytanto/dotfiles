@@ -6,7 +6,7 @@ import { v_flex, h_flex } from "gpui-base";
 import { agents, panes, spaces, run, theme, hc, exec, home, readTextFile, watchFolder, setBadge, notify, checking, nextCommand } from "herdr";
 import {
   readPending, readTaskFiles, currentPlan, prLinks, parseDialog, samePage,
-  projectDir, taskDir, TAIL_ARGS, PR_ROWS,
+  projectDir, taskDir, TAIL_ARGS, PR_ROWS, pastBusinessDay,
 } from "./transcript.js";
 
 const ORDER = { blocked: 0, done: 1, working: 2, idle: 3 };
@@ -134,7 +134,10 @@ export default class Inbox extends View {
       const tail = await exec("tail", TAIL_ARGS(entry.path));
       if (tail.code === 0) {
         const p = readPending(tail.stdout);
+        // Proposals opened from the folded line stay open until new ones replace them.
+        if (p.nextAt !== entry.nextAt) entry.nextOpen = false;
         entry.next = p.next;
+        entry.nextAt = p.nextAt;
         entry.choices = p.choices;
         entry.asked = p.asked;
         entry.logTasks = p.tasks;
@@ -447,17 +450,30 @@ export default class Inbox extends View {
       .when(showAsked, (el) => el.child(v_flex().gap(4).p(8).rounded(6).bg(t.surface).border(1).border_color(t.border)
         .child(div().text_size(11).text_color(t.dim).child("文章で聞かれていること"))
         .child(div().min_w(0).w_full().whitespace_normal().text_size(12).text_color(t.foreground).child(entry.asked))))
-      .when(Boolean(showNext), (el) => el.child(v_flex().gap(4)
-        .child(div().text_size(11).text_color(t.dim).child("次の一手"))
-        .children(entry.next.map((n, i) => v_flex()
-          .gap(2)
-          // The earlier JSON form had no mark: its first item was the recommended one.
-          .child(h_flex().gap(6).items_center()
-            .child(this.button(`next-${a.address}-${i}`, `${i + 1}. ${n.label}`, t, (_e, cx) => this.send(a.address, entry, n.prompt, cx),
-              { primary: entry.next.some((x) => x.recommended) ? n.recommended : i === 0 }))
-            .when(Boolean(n.recommended), (el) => el.child(div().text_size(11).text_color(t.accent).child("おすすめ"))))
-          .when(Boolean(n.reason), (el) => el.child(div().pl(2).text_size(11).text_color(t.dim).child(n.reason)))))))
+      .when(Boolean(showNext), (el) => el.child(this.nextView(a.address, entry, t)))
       .when(Boolean(entry.prs?.length), (el) => el.child(this.prView(a.address, entry.prs, t)));
+  }
+
+  // Proposals left a business day or more were most likely put aside: folded to one line so they don't
+  // bury what needs pressing now, and opened again when the work resumes.
+  nextView(address, entry, t) {
+    const old = entry.nextAt != null && pastBusinessDay(entry.nextAt, Date.now());
+    const age = old ? `（${Math.floor((Date.now() - entry.nextAt) / 86400000)} 日前）` : "";
+    const header = h_flex().id(`next-fold-${address}`).gap(4).items_center()
+      .child(div().text_size(11).text_color(t.dim).child(old ? `${entry.nextOpen ? "▾" : "▸"} 次の一手 ${entry.next.length} 件${age}` : "次の一手"))
+      .when(old, (el) => el.cursor_pointer().hover((s) => s.bg(t.hover)).rounded(4)
+        .on_click((_e, cx) => { entry.nextOpen = !entry.nextOpen; cx.notify(); }));
+    if (old && !entry.nextOpen) return header;
+    return v_flex().gap(4)
+      .child(header)
+      .children(entry.next.map((n, i) => v_flex()
+        .gap(2)
+        // The earlier JSON form had no mark: its first item was the recommended one.
+        .child(h_flex().gap(6).items_center()
+          .child(this.button(`next-${address}-${i}`, `${i + 1}. ${n.label}`, t, (_e, cx) => this.send(address, entry, n.prompt, cx),
+            { primary: entry.next.some((x) => x.recommended) ? n.recommended : i === 0 }))
+          .when(Boolean(n.recommended), (el) => el.child(div().text_size(11).text_color(t.accent).child("おすすめ"))))
+        .when(Boolean(n.reason), (el) => el.child(div().pl(2).text_size(11).text_color(t.dim).child(n.reason)))));
   }
 
   render(cx) {
