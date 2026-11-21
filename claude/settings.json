@@ -80,7 +80,9 @@
       "Bash(psql *)",
       "Bash(mysql *)"
     ],
-    "ask": [],
+    "ask": [
+      "mcp__google-workspace__calendar_create_event"
+    ],
     "defaultMode": "auto"
   },
   "model": "opus",

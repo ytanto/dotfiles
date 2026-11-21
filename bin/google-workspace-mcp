@@ -58,6 +58,8 @@ NOT_LOGGED_IN = (
     "ターミナルで `google-workspace-mcp login` を実行してから、もう一度呼んでください。"
 )
 
+MAX_DESCRIPTION = 2000
+
 READ_ONLY = ToolAnnotations(readOnlyHint=True, openWorldHint=True)
 WRITES = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True)
 
@@ -72,9 +74,13 @@ class NotLoggedIn(Exception):
 
 
 def _save_token(creds: Credentials) -> None:
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    TOKEN_PATH.write_text(creds.to_json())
-    TOKEN_PATH.chmod(0o600)
+    # refresh token を含むので、一瞬でもほかのユーザーが読める状態を作らない（最初から 600 で作って置き換える）
+    CONFIG_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+    tmp = TOKEN_PATH.with_suffix(".tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(creds.to_json())
+    os.replace(tmp, TOKEN_PATH)
 
 
 def _credentials() -> Credentials:
@@ -385,10 +391,21 @@ def calendar_create_event(
     calendar_id: str = "primary",
     send_updates: str = "none",
 ) -> Any:
-    """カレンダーに予定を入れる。start・end は ISO 8601。attendees を入れても、send_updates が
-    "none"（既定）なら招待のメールは送らない。送るときは "all" にする。
+    """カレンダーに予定を入れる。start・end は ISO 8601。attendees は自分と同じドメインのアドレスだけ入れられる。
+    send_updates が "none"（既定）なら招待のメールは送らない。送るときは "all" にする。
     """
     cal = _service("calendar", "v3")
+    # 読んだメールや資料に仕込まれた指示で、社外へ招待のメールごと中身を送らされないように、
+    # 参加者は自社のドメインに限り、説明欄も短くとどめる
+    if send_updates not in ("none", "all"):
+        return {"error": 'send_updates は "none" か "all" にしてください。'}
+    if len(description) > MAX_DESCRIPTION:
+        return {"error": f"説明は {MAX_DESCRIPTION} 文字までにしてください。"}
+    if attendees:
+        domain = cal.calendars().get(calendarId="primary").execute()["id"].rsplit("@", 1)[-1].lower()
+        outside = [a for a in attendees if a.rsplit("@", 1)[-1].lower() != domain]
+        if outside:
+            return {"error": f"参加者に入れられるのは @{domain} のアドレスだけです。社外の人は、指示者がカレンダーで足してください: {outside}"}
     body: dict[str, Any] = {
         "summary": summary,
         "start": {"dateTime": _rfc3339(start, _local_now())},
