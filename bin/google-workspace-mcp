@@ -23,6 +23,7 @@ Workspace の契約とデータ処理の約束の中に収まるので、小さ�
 from __future__ import annotations
 
 import base64
+import email.utils
 import functools
 import html
 import os
@@ -165,12 +166,26 @@ def _body_text(payload: dict) -> str:
     return "\n".join(plain) if plain else "\n".join(rich)
 
 
+_own_domain: str | None = None
+
+
+def _external(from_header: str) -> bool:
+    """差出人が自分と同じドメインでなければ True。社外の目印で、False でも中身を信じてよいという意味ではない。"""
+    global _own_domain
+    if _own_domain is None:
+        me = _service("gmail", "v1").users().getProfile(userId="me").execute()["emailAddress"]
+        _own_domain = me.rsplit("@", 1)[-1].lower()
+    # 表示名に自社のアドレスを書いた社外のメールを通さないよう、アドレスだけを取り出して完全一致で比べる
+    addr = email.utils.parseaddr(from_header)[1]
+    return addr.rsplit("@", 1)[-1].lower() != _own_domain if "@" in addr else True
+
+
 @mcp.tool(annotations=READ_ONLY)
 @_guard
 def gmail_search(query: str, max_results: int = 20) -> Any:
     """Gmail をメールの検索式で探す（例: `is:unread newer_than:1d`, `from:foo@example.com subject:請求`）。
 
-    メールごとに id・threadId・日時・差出人・宛先・件名・冒頭の抜粋・ラベルを返す。
+    メールごとに id・threadId・日時・差出人・社外か（external）・宛先・件名・冒頭の抜粋・ラベルを返す。
     本文はスレッド単位で gmail_read_thread で読む。
     """
     gmail = _service("gmail", "v1")
@@ -190,6 +205,7 @@ def gmail_search(query: str, max_results: int = 20) -> Any:
                 "threadId": msg["threadId"],
                 "date": _header(h, "Date"),
                 "from": _header(h, "From"),
+                "external": _external(_header(h, "From")),
                 "to": _header(h, "To"),
                 "cc": _header(h, "Cc"),
                 "subject": _header(h, "Subject"),
@@ -216,6 +232,7 @@ def gmail_read_thread(thread_id: str, max_chars_per_message: int = 8000) -> Any:
                 "id": msg["id"],
                 "date": _header(h, "Date"),
                 "from": _header(h, "From"),
+                "external": _external(_header(h, "From")),
                 "to": _header(h, "To"),
                 "cc": _header(h, "Cc"),
                 "subject": _header(h, "Subject"),
