@@ -41,6 +41,9 @@ export default class Inbox extends View {
     this.watches = new Map();
     this.badge = undefined;
     this.started = false;
+    // sessionId -> nextAt of the proposals put aside. Keyed by the reply they came in, so the
+    // session's next proposals show again.
+    try { this.skipped = JSON.parse(localStorage.getItem("skipped") ?? "{}"); } catch { this.skipped = {}; }
   }
 
   async close() {
@@ -51,9 +54,9 @@ export default class Inbox extends View {
   // The panel's buttons as commands, for keys.json and scripts (`herdr-app do "inbox.next:t7 0"`):
   // pick:<terminal> <option> (an option of the question shown now), answer:<terminal> (send the
   // multi-select picks, or submit on the review page), next:<terminal> <index>, choose:<terminal> <index>
-  // (a choice listed in prose). Indexes from 0.
+  // (a choice listed in prose), skip:<terminal> (put the next steps aside). Indexes from 0.
   command(c, cx) {
-    const m = /^(pick|answer|next|choose):(\S+)(?: (\d+))?$/.exec(c ?? "");
+    const m = /^(pick|answer|next|choose|skip):(\S+)(?: (\d+))?$/.exec(c ?? "");
     const entry = m && this.info.get(m[2]);
     if (!entry) {
       notify({ title: "受信箱: 使えない命令です", body: String(c), level: "error" });
@@ -65,6 +68,7 @@ export default class Inbox extends View {
     else if (m[1] === "answer" && page) this.answer(m[2], entry, cx);
     else if (m[1] === "next" && entry.next?.[i] && entry.status !== "blocked") this.send(m[2], entry, entry.next[i].prompt, cx);
     else if (m[1] === "choose" && entry.choices?.[i] && entry.status !== "blocked") this.send(m[2], entry, `${entry.choices[i].key} で進めて`, cx);
+    else if (m[1] === "skip" && entry.next?.length && entry.nextAt != null) this.skip(entry, cx);
     else notify({ title: "受信箱: いまは実行できません", body: String(c), level: "error" });
   }
 
@@ -317,6 +321,21 @@ export default class Inbox extends View {
     });
   }
 
+  // "Not now" decided in the panel: nothing goes to the session, so it doesn't take a turn and
+  // answer with yet more proposals.
+  skip(entry, cx) {
+    this.skipped[entry.sessionId] = entry.nextAt;
+    // Only the latest few hundred matter; older sessions' marks would only grow the store.
+    const keep = Object.entries(this.skipped).sort((x, y) => y[1] - x[1]).slice(0, 300);
+    this.skipped = Object.fromEntries(keep);
+    localStorage.setItem("skipped", JSON.stringify(this.skipped));
+    cx.notify();
+  }
+
+  isSkipped(entry) {
+    return Boolean(entry.sessionId) && entry.nextAt != null && this.skipped[entry.sessionId] === entry.nextAt;
+  }
+
   button(id, label, t, onClick, { primary = false, disabled = false } = {}) {
     return div()
       .id(id)
@@ -421,7 +440,7 @@ export default class Inbox extends View {
     const pane = panes().find((p) => p.terminal === a.address);
     const kindLabel = a.status === "blocked" ? LABEL[entry.kind] ?? LABEL.blocked : LABEL[a.status];
     const answerable = a.status === "done" || a.status === "idle";
-    const showNext = answerable && entry.next?.length;
+    const showNext = answerable && entry.next?.length && !this.isSkipped(entry);
     const showChoices = answerable && entry.choices?.length;
     const showAsked = answerable && Boolean(entry.asked);
     // The task folder empties once every step is done; the transcript still has the finished plan.
@@ -463,9 +482,20 @@ export default class Inbox extends View {
       .child(div().text_size(11).text_color(t.dim).child(old ? `${entry.nextOpen ? "▾" : "▸"} 次の一手 ${entry.next.length} 件${age}` : "次の一手"))
       .when(old, (el) => el.cursor_pointer().hover((s) => s.bg(t.hover)).rounded(4)
         .on_click((_e, cx) => { entry.nextOpen = !entry.nextOpen; cx.notify(); }));
-    if (old && !entry.nextOpen) return header;
-    return v_flex().gap(4)
+    // Beside the header, not inside it: the folded header toggles on click.
+    const top = h_flex().gap(6).items_center()
       .child(header)
+      .child(div().flex_1())
+      .when(entry.nextAt != null && Boolean(entry.sessionId), (el) => el.child(div()
+        .id(`next-skip-${address}`)
+        .px(6).py(1).rounded(4).text_size(11).text_color(t.dim)
+        .cursor_pointer().hover((s) => s.bg(t.hover).text_color(t.foreground))
+        .tooltip("タブには何も送らずに、この次の一手を隠します")
+        .on_click((_e, cx) => this.skip(entry, cx))
+        .child("見送る")));
+    if (old && !entry.nextOpen) return top;
+    return v_flex().gap(4)
+      .child(top)
       .children(entry.next.map((n, i) => v_flex()
         .gap(2)
         // The earlier JSON form had no mark: its first item was the recommended one.
