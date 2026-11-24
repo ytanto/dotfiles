@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- タイトルは話題の名前（2〜4 語） -->
+    <title>{{話題}}</title>
+    <style>
+      :root {
+        --bg: #f4f6f8;
+        --surface: #ffffff;
+        --surface-2: #eef1f4;
+        --ink: #1d232c;
+        --muted: #5a6472;
+        --line: #dde2e8;
+        --line-strong: #9aa3b0;
+        --info: #2a64c8;
+        --info-soft: #e2ecfb;
+        --good: #2b7f52;
+        --good-soft: #e3f3ea;
+        --warn: #b4521a;
+        --warn-soft: #fcebd8;
+        --font-body:
+          "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+        --font-head:
+          "Zen Kaku Gothic New", "Noto Sans JP", "Hiragino Sans", system-ui,
+          sans-serif;
+        --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #13161b;
+          --surface: #1b1f26;
+          --surface-2: #232830;
+          --ink: #e6e9ee;
+          --muted: #9aa3b0;
+          --line: #2e343d;
+          --line-strong: #5a6472;
+          --info: #7aa7f2;
+          --info-soft: #1c2a40;
+          --good: #6cc495;
+          --good-soft: #17301f;
+          --warn: #f0a048;
+          --warn-soft: #3a2a18;
+        }
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.75;
+        padding: 32px 16px 64px;
+      }
+      .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 48px;
+      }
+      .page > *,
+      section > * {
+        min-width: 0;
+        max-width: 100%;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-head);
+        line-height: 1.35;
+        margin: 0;
+      }
+      h1 {
+        font-size: 26px;
+      }
+      h2 {
+        font-size: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--line);
+      }
+      h3 {
+        font-size: 16px;
+      }
+      p {
+        margin: 0;
+      }
+      ul,
+      ol {
+        margin: 0;
+        padding-left: 1.3em;
+      }
+      /* 長いファイルのパスがスマホ幅でページをはみ出させないように折り返す */
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+        overflow-wrap: anywhere;
+      }
+      header,
+      section {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .meta {
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 18px;
+      }
+      .note {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .callout {
+        background: var(--warn-soft);
+        border: 1px solid var(--warn);
+        border-radius: 10px;
+        padding: 14px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .callout .lead {
+        font-weight: 700;
+        color: var(--warn);
+      }
+      .callout.info {
+        background: var(--info-soft);
+        border-color: var(--info);
+      }
+      .callout.info .lead {
+        color: var(--info);
+      }
+      .box {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 14px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      /* 表は横スクロールの枠に入れる（スマホ幅でページをはみ出させない） */
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--surface);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 9px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      thead th {
+        background: var(--surface-2);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      td.ng {
+        color: var(--warn);
+        font-weight: 700;
+      }
+      td.ok {
+        color: var(--good);
+        font-weight: 700;
+      }
+      @media (max-width: 600px) {
+        table {
+          min-width: 560px;
+        }
+        thead th {
+          white-space: normal;
+        }
+      }
+
+      /* 図（inline SVG）。色は CSS 変数で塗り、ダークモードでも読めるようにする */
+      .flow {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px;
+        overflow-x: auto;
+      }
+      .flow svg {
+        display: block;
+        width: 100%;
+        min-width: 640px;
+        height: auto;
+        color: var(--line-strong);
+      }
+      .flow .n rect {
+        fill: var(--surface-2);
+        stroke: var(--line-strong);
+        stroke-width: 1.5;
+      }
+      .flow .n.ok rect {
+        fill: var(--good-soft);
+        stroke: var(--good);
+      }
+      .flow .n.ng rect {
+        fill: var(--warn-soft);
+        stroke: var(--warn);
+        stroke-width: 2.5;
+      }
+      .flow .n.q rect {
+        fill: var(--info-soft);
+        stroke: var(--info);
+      }
+      .flow text {
+        fill: var(--ink);
+        font-family: var(--font-body);
+        font-size: 14px;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .flow text.sub {
+        font-size: 12px;
+        fill: var(--muted);
+      }
+      .flow .n.ng text.t {
+        fill: var(--warn);
+        font-weight: 700;
+      }
+      .flow .n.ok text.t {
+        fill: var(--good);
+        font-weight: 700;
+      }
+      .flow line,
+      .flow path {
+        stroke: currentColor;
+        stroke-width: 1.8;
+        fill: none;
+      }
+      .flow .lbl {
+        font-size: 12.5px;
+        fill: var(--muted);
+      }
+      .flow .lbl.hot {
+        fill: var(--warn);
+        font-weight: 700;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .legend span::before {
+        content: "";
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        margin-right: 6px;
+        vertical-align: -1px;
+        border: 1.5px solid;
+      }
+      .legend .l-ok::before {
+        background: var(--good-soft);
+        border-color: var(--good);
+      }
+      .legend .l-ng::before {
+        background: var(--warn-soft);
+        border-color: var(--warn);
+      }
+      .legend .l-q::before {
+        background: var(--info-soft);
+        border-color: var(--info);
+      }
+
+      /* 画像を左右に並べる。スマホ幅では縦に積む */
+      .figs {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        gap: 20px;
+        align-items: start;
+      }
+      @media (max-width: 600px) {
+        .figs {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fig {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 0;
+      }
+      .tag {
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 1px 10px;
+        margin-left: 8px;
+        vertical-align: 2px;
+      }
+      .tag.ok {
+        background: var(--good-soft);
+        color: var(--good);
+      }
+      .tag.ng {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+      .tag.same {
+        background: var(--surface-2);
+        color: var(--muted);
+      }
+
+      /* 枠と番号。枠は画像に焼き込まず、画像に対する % で重ねる */
+      .shot-wrap {
+        padding: 14px 10px 6px 14px;
+        overflow-x: auto;
+      }
+      .shot {
+        position: relative;
+        margin: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+      .shot img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        cursor: zoom-in;
+      }
+      .mark {
+        position: absolute;
+        border: 3px solid #2b7f52;
+        border-radius: 6px;
+        background: rgba(43, 127, 82, 0.06);
+        pointer-events: none;
+      }
+      .mark .num {
+        position: absolute;
+        top: -12px;
+        left: -12px;
+      }
+      .num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        color: #fff;
+        background: #2b7f52;
+        font: 700 12px/1 var(--font-mono);
+        box-shadow: 0 0 0 2px #fff;
+        flex: none;
+      }
+      ul.rel-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 14px;
+      }
+      ul.rel-list li {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      ul.rel-list .num {
+        box-shadow: none;
+        transform: translateY(5px);
+      }
+
+      #zoom {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.82);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        cursor: zoom-out;
+        z-index: 10;
+      }
+      #zoom.open {
+        display: flex;
+      }
+      #zoom img {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 6px;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <h1>{{いま話していることを 1 行で}}</h1>
+        <div class="meta">
+          <span>{{YYYY-MM-DD}}</span>
+          <span>{{対象（リポジトリ・PR・画面など）}}</span>
+        </div>
+        <!-- 結論。3 行まで。良い知らせなら class="callout info" にする -->
+        <div class="callout">
+          <p class="lead">結論：{{いちばん大事なこと}}</p>
+          <ul>
+            <li>{{理由・補足}}</li>
+            <li>やること：{{次にやること}}</li>
+          </ul>
+        </div>
+      </header>
+
+      <!-- 材料の無い節は消す -->
+      <section>
+        <h2>1. {{前提・用語}}</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>{{名前}}</th>
+                <th>{{違い 1}}</th>
+                <th>{{違い 2}}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>{{A}}</b></td>
+                <td>{{…}}</td>
+                <td>{{…}}</td>
+              </tr>
+              <tr>
+                <td><b>{{B}}</b></td>
+                <td>{{…}}</td>
+                <td class="ng">{{目立たせたい値}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>2. {{図の見出し}}</h2>
+        <!-- 分かれ道の図の骨組み。箱は <g class="n">（ふつう）/ "n q"（分かれ道）/ "n ok"（良い行き先）/ "n ng"（悪い行き先）。座標は viewBox の中で手で決める -->
+        <div class="flow">
+          <svg viewBox="0 0 920 360" role="img" aria-label="{{図の説明}}">
+            <defs>
+              <marker
+                id="arr"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="8"
+                markerHeight="8"
+                orient="auto-start-reverse"
+              >
+                <path
+                  d="M0,0 L10,5 L0,10 z"
+                  fill="currentColor"
+                  stroke="none"
+                />
+              </marker>
+            </defs>
+            <line x1="460" y1="56" x2="460" y2="96" marker-end="url(#arr)" />
+            <path d="M380,146 L220,216" marker-end="url(#arr)" />
+            <text class="lbl" x="280" y="168">{{はい}}</text>
+            <path d="M540,146 L700,216" marker-end="url(#arr)" />
+            <text class="lbl hot" x="660" y="168">{{いいえ}}</text>
+            <g class="n">
+              <rect x="340" y="8" width="240" height="48" rx="10" />
+              <text class="t" x="460" y="32">{{始まり}}</text>
+            </g>
+            <g class="n q">
+              <rect x="300" y="98" width="320" height="48" rx="24" />
+              <text class="t" x="460" y="122">{{分かれ道の問い}}</text>
+            </g>
+            <g class="n ok">
+              <rect x="80" y="218" width="280" height="64" rx="10" />
+              <text class="t" x="220" y="242">{{良い行き先}}</text>
+              <text class="sub" x="220" y="264">{{補足}}</text>
+            </g>
+            <g class="n ng">
+              <rect x="560" y="218" width="280" height="64" rx="10" />
+              <text class="t" x="700" y="242">{{悪い行き先}}</text>
+              <text class="sub" x="700" y="264">{{補足}}</text>
+            </g>
+            <text class="lbl hot" x="700" y="310">
+              {{いちばん伝えたい注記}}
+            </text>
+          </svg>
+        </div>
+        <div class="legend">
+          <span class="l-q">分かれ道</span
+          ><span class="l-ok">{{良い行き先}}</span
+          ><span class="l-ng">{{悪い行き先}}</span>
+        </div>
+        <p>{{図の読み方を 1〜2 行で}}</p>
+      </section>
+
+      <section>
+        <h2>3. 画面で見る</h2>
+        <p class="note">
+          画像を押すと大きく表示します。{{差し替えて作った画面があれば、そう書く}}
+        </p>
+        <div class="figs">
+          <div class="fig">
+            <h3>{{左の見出し}}<span class="tag ok">{{札}}</span></h3>
+            <div class="shot-wrap">
+              <div class="shot" style="max-width: 1200px">
+                <img src="shots/{{left}}.jpg" alt="{{左の画像}}" />
+              </div>
+            </div>
+            <p>{{何が写っているか}}</p>
+          </div>
+          <div class="fig">
+            <h3>{{右の見出し}}<span class="tag ng">{{札}}</span></h3>
+            <div class="shot-wrap">
+              <div class="shot" style="max-width: 1200px">
+                <img src="shots/{{right}}.jpg" alt="{{右の画像}}" />
+                <div
+                  class="mark"
+                  style="left: 0%; top: 0%; width: 10%; height: 10%"
+                >
+                  <span class="num">1</span>
+                </div>
+              </div>
+            </div>
+            <ul class="rel-list">
+              <li>
+                <span class="num">1</span><span>{{1 で起きていること}}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>4. まとめ</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>{{条件}}</th>
+                <th>{{前}}</th>
+                <th>{{後}}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{…}}</td>
+                <td>{{…}}</td>
+                <td class="ok">{{良くなった}}</td>
+              </tr>
+              <tr>
+                <td>{{…}}</td>
+                <td>{{…}}</td>
+                <td class="ng">{{問題}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>5. どうすればいいか</h2>
+        <div class="box">
+          <h3>{{すぐやること}}</h3>
+          <p>{{…}}</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>案</th>
+                <th>中身</th>
+                <th>良いところ</th>
+                <th>気になるところ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>A（おすすめ）</b></td>
+                <td>{{…}}</td>
+                <td>{{…}}</td>
+                <td>{{…}}</td>
+              </tr>
+              <tr>
+                <td>B</td>
+                <td>{{…}}</td>
+                <td>{{…}}</td>
+                <td>{{…}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>6. 根拠</h2>
+        <ul>
+          <li>{{何が分かるか}}（<code>{{path/to/file.ext:行}}</code>）</li>
+        </ul>
+      </section>
+    </div>
+    <div id="zoom"><img alt="" /></div>
+    <script>
+      // 表や左右の並びの画像は小さいので、押したら全面に重ねて見せる
+      const zoom = document.getElementById("zoom");
+      const zoomImg = zoom.querySelector("img");
+      document.querySelectorAll(".shot img").forEach((img) => {
+        img.addEventListener("click", () => {
+          zoomImg.src = img.src;
+          zoomImg.alt = img.alt;
+          zoom.classList.add("open");
+        });
+      });
+      zoom.addEventListener("click", () => zoom.classList.remove("open"));
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") zoom.classList.remove("open");
+      });
+    </script>
+  </body>
+</html>
